@@ -6,14 +6,23 @@ import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { dataSP, formatarSP, nomeDoDia, somarDias, type DataISO } from "@/lib/datas";
+import {
+  HORARIOS_MEIA_HORA,
+  dataSP,
+  formatarSP,
+  minutoSP,
+  minutosDoHorario,
+  nomeDoDia,
+  rotuloHorario,
+  somarDias,
+  type DataISO,
+} from "@/lib/datas";
 import { cn } from "@/lib/utils";
 import { criarBloqueio, removerBloqueio } from "../acoes";
 
 type Bloqueio = { id: string; inicio: Date; fim: Date; motivo: string };
 
 const MOTIVOS = ["Manutenção", "Feriado", "Evento", "Campeonato"];
-const HORAS = Array.from({ length: 25 }, (_, h) => `${String(h).padStart(2, "0")}:00`);
 
 function descreverPeriodo(b: Bloqueio) {
   const dia = dataSP(b.inicio);
@@ -26,7 +35,7 @@ function descreverPeriodo(b: Bloqueio) {
   if (dia !== diaFim) return { dia: `${formatarSP(b.inicio, "dd/MM")} a ${formatarSP(b.fim, "dd/MM")}`, horas: "Vários dias" };
   return {
     dia: nome,
-    horas: `${formatarSP(b.inicio, "HH")}h às ${fimMeiaNoite ? "00" : formatarSP(b.fim, "HH")}h`,
+    horas: `${rotuloHorario(minutoSP(b.inicio))} às ${rotuloHorario(minutoSP(b.fim))}`,
   };
 }
 
@@ -155,11 +164,11 @@ function NovoBloqueio({ hoje, onFechar }: { hoje: DataISO; onFechar: () => void 
           {!diaInteiro && (
             <div className="mt-2 flex items-center gap-2">
               <select aria-label="Das" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} className={classeSelect}>
-                {HORAS.slice(0, 24).map((h) => <option key={h} value={h}>{h.slice(0, 2)}h</option>)}
+                {HORARIOS_MEIA_HORA.slice(0, -1).map((h) => <option key={h} value={h}>{rotuloHorario(minutosDoHorario(h))}</option>)}
               </select>
               <span className="text-sm text-muted-foreground">até</span>
               <select aria-label="Até" value={horaFim} onChange={(e) => setHoraFim(e.target.value)} className={classeSelect}>
-                {HORAS.slice(1).map((h) => <option key={h} value={h}>{h === "24:00" ? "00h" : `${h.slice(0, 2)}h`}</option>)}
+                {HORARIOS_MEIA_HORA.slice(1).map((h) => <option key={h} value={h}>{rotuloHorario(minutosDoHorario(h))}</option>)}
               </select>
             </div>
           )}

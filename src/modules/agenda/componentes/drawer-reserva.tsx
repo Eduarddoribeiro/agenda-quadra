@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { IconeWhatsApp } from "@/components/icone-whatsapp";
+import { NumeralHorario } from "@/components/numeral-horario";
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { formatarData, horaCurta, nomeDoDia, type DataISO } from "@/lib/datas";
+import { formatarData, rotuloHorario, nomeDoDia, type DataISO } from "@/lib/datas";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
 import { cn } from "@/lib/utils";
 import { cancelarReserva, editarReserva, moverReserva, reativarReserva } from "../acoes";
@@ -43,7 +44,7 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
   const [pendente, startTransition] = useTransition();
 
   const dataLegivel = `${nomeDoDia(data)}, ${formatarData(data, "dd/MM")}`;
-  const mensagem = `Olá, ${reserva.clienteNome.split(" ")[0]}! Confirmando sua reserva na quadra: ${dataLegivel.toLowerCase()}, das ${horaCurta(slot.hora)} às ${horaCurta(slot.hora + 1)}.`;
+  const mensagem = `Olá, ${reserva.clienteNome.split(" ")[0]}! Confirmando sua reserva na quadra: ${dataLegivel.toLowerCase()}, das ${rotuloHorario(slot.minuto)} às ${rotuloHorario(slot.minuto + 60)}.`;
   const obsAlterada = observacoes.trim() !== (reserva.observacoes ?? "");
 
   function salvarObservacoes() {
@@ -56,9 +57,9 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
 
   function trocarPara(destino: Slot) {
     startTransition(async () => {
-      const r = await moverReserva(reserva.id, data, destino.hora);
+      const r = await moverReserva(reserva.id, data, destino.minuto);
       if (!r.ok) return void toast.error(r.erro);
-      toast.success(`${reserva.clienteNome} agora às ${horaCurta(destino.hora)}`);
+      toast.success(`${reserva.clienteNome} agora às ${rotuloHorario(destino.minuto)}`);
       onFechar();
     });
   }
@@ -68,7 +69,7 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
       const r = await cancelarReserva(reserva.id);
       if (!r.ok) return void toast.error(r.erro);
       onFechar();
-      toast(`Reserva das ${horaCurta(slot.hora)} cancelada`, {
+      toast(`Reserva das ${rotuloHorario(slot.minuto)} cancelada`, {
         description: `${reserva.clienteNome}, ${dataLegivel.toLowerCase()}`,
         duration: 8000,
         action: {
@@ -89,12 +90,10 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
         <div className="min-w-0 flex-1">
           <DrawerTitle className="truncate text-2xl font-extrabold">{reserva.clienteNome}</DrawerTitle>
           <DrawerDescription className="mt-0.5 text-sm">
-            {dataLegivel}, {horaCurta(slot.hora)} às {horaCurta(slot.hora + 1)}
+            {dataLegivel}, {rotuloHorario(slot.minuto)} às {rotuloHorario(slot.minuto + 60)}
           </DrawerDescription>
         </div>
-        <span className="font-placar shrink-0 text-5xl" aria-hidden>
-          {String(slot.hora % 24).padStart(2, "0")}
-        </span>
+        <NumeralHorario minuto={slot.minuto} className="shrink-0 text-5xl" />
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
@@ -178,14 +177,14 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
             ) : (
               <ul className="mt-3 grid grid-cols-4 gap-2">
                 {livres.map((s) => (
-                  <li key={s.hora}>
+                  <li key={s.minuto}>
                     <button
                       type="button"
                       disabled={pendente}
                       onClick={() => trocarPara(s)}
                       className="font-placar h-14 w-full rounded-xl bg-livre-fundo text-2xl text-livre-tinta outline-none focus-visible:ring-3 focus-visible:ring-ring/60 disabled:opacity-50"
                     >
-                      {horaCurta(s.hora)}
+                      {rotuloHorario(s.minuto)}
                     </button>
                   </li>
                 ))}
@@ -205,7 +204,7 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
           <div className="rounded-xl border-2 border-destructive/40 p-4">
             <p className="font-bold">Cancelar a reserva de {reserva.clienteNome}?</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              O horário das {horaCurta(slot.hora)} volta a ficar livre.
+              O horário das {rotuloHorario(slot.minuto)} volta a ficar livre.
             </p>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button

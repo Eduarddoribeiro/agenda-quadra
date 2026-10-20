@@ -165,7 +165,7 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
 
             <ol className="space-y-2.5">
               {slots.map((slot) => (
-                <LinhaSlot key={slot.hora} slot={slot} onReservar={setSlotReservar} onAbrirReserva={setSlotAberto} />
+                <LinhaSlot key={slot.minuto} slot={slot} onReservar={setSlotReservar} onAbrirReserva={setSlotAberto} />
               ))}
             </ol>
           </>
@@ -189,7 +189,7 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
       <DrawerReserva
         data={data}
         slot={slotAberto}
-        livres={livres.filter((s) => s.hora !== slotAberto?.hora)}
+        livres={livres.filter((s) => s.minuto !== slotAberto?.minuto)}
         onFechar={() => setSlotAberto(null)}
       />
     </div>

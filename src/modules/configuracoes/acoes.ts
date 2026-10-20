@@ -1,46 +1,42 @@
 "use server";
 
-import { and, eq, gt, lt, notInArray } from "drizzle-orm";
+import { and, eq, gt, lt } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { db } from "@/db";
 import { bloqueios, horariosFuncionamento, reservas } from "@/db/schema";
 import { exigirUsuario } from "@/lib/auth";
-import { ehDataISO, instanteSP, somarDias, type DataISO } from "@/lib/datas";
+import { DIAS_SEMANA, ehDataISO, instanteSP, minutosDoHorario, somarDias, type DataISO } from "@/lib/datas";
 import { falha, sucesso, type Resultado } from "@/lib/resultado";
 import { getQuadraPrincipal } from "@/modules/agenda/consultas";
+import { DURACAO_SLOT } from "@/modules/agenda/slots";
 import type { HorarioDia } from "./consultas";
 
 const REGEX_HORA = /^([01]\d|2[0-4]):[0-5]\d$/;
 
 export async function salvarHorarios(dias: HorarioDia[]): Promise<Resultado> {
   await exigirUsuario();
-  const abertos = dias.filter((d) => d.aberto);
 
-  for (const d of abertos) {
-    if (!REGEX_HORA.test(d.abertura) || !REGEX_HORA.test(d.fechamento)) return falha("Horário inválido.");
-    if (d.fechamento <= d.abertura) return falha("O fechamento precisa ser depois da abertura.");
+  for (const d of dias) {
+    if (!Number.isInteger(d.diaSemana) || d.diaSemana < 0 || d.diaSemana > 6) return falha("Dia inválido.");
+    const nome = DIAS_SEMANA[d.diaSemana];
+    const ordenados = [...d.periodos].sort((a, b) => a.abertura.localeCompare(b.abertura));
+    for (const [i, p] of ordenados.entries()) {
+      if (!REGEX_HORA.test(p.abertura) || !REGEX_HORA.test(p.fechamento)) return falha("Horário inválido.");
+      if (minutosDoHorario(p.fechamento) - minutosDoHorario(p.abertura) < DURACAO_SLOT)
+        return falha(`${nome}: cada período precisa ter pelo menos 1 hora.`);
+      if (i > 0 && p.abertura < ordenados[i - 1].fechamento)
+        return falha(`${nome}: os períodos não podem se sobrepor.`);
+    }
   }
 
   const quadra = await getQuadraPrincipal();
+  // Substitui tudo: são no máximo algumas linhas por dia.
   await db.transaction(async (tx) => {
-    const diasAbertos = abertos.map((d) => d.diaSemana);
-    await tx
-      .delete(horariosFuncionamento)
-      .where(
-        and(
-          eq(horariosFuncionamento.quadraId, quadra.id),
-          diasAbertos.length ? notInArray(horariosFuncionamento.diaSemana, diasAbertos) : undefined,
-        ),
-      );
-    for (const d of abertos) {
-      await tx
-        .insert(horariosFuncionamento)
-        .values({ quadraId: quadra.id, diaSemana: d.diaSemana, abertura: d.abertura, fechamento: d.fechamento })
-        .onConflictDoUpdate({
-          target: [horariosFuncionamento.quadraId, horariosFuncionamento.diaSemana],
-          set: { abertura: d.abertura, fechamento: d.fechamento },
-        });
-    }
+    await tx.delete(horariosFuncionamento).where(eq(horariosFuncionamento.quadraId, quadra.id));
+    const linhas = dias.flatMap((d) =>
+      d.periodos.map((p) => ({ quadraId: quadra.id, diaSemana: d.diaSemana, abertura: p.abertura, fechamento: p.fechamento })),
+    );
+    if (linhas.length) await tx.insert(horariosFuncionamento).values(linhas);
   });
 
   refresh();

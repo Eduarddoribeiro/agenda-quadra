@@ -1,0 +1,2 @@
+ALTER TABLE "horarios_funcionamento" DROP CONSTRAINT "horarios_quadra_dia_unq";--> statement-breakpoint
+CREATE INDEX "horarios_quadra_dia_idx" ON "horarios_funcionamento" USING btree ("quadra_id","dia_semana");

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatarData, horaCurta, nomeDoDia, type DataISO } from "@/lib/datas";
+import { formatarData, rotuloHorario, nomeDoDia, type DataISO } from "@/lib/datas";
 import { formatarTelefone } from "@/lib/telefone";
 import { cn } from "@/lib/utils";
 import { pesquisarClientes } from "@/modules/clientes/acoes";
@@ -69,7 +69,7 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
     startSalvar(async () => {
       const resultado = await criarReserva({
         data,
-        hora: slot.hora,
+        minuto: slot.minuto,
         clienteId: selecionado?.id,
         novoCliente: cadastrando ? { nome: novoNome, telefone: novoTelefone } : undefined,
         observacoes,
@@ -79,7 +79,7 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
         return;
       }
       const nome = selecionado?.nome ?? novoNome.trim();
-      toast.success(`Reservado: ${nome}, ${horaCurta(slot.hora)}`);
+      toast.success(`Reservado: ${nome}, ${rotuloHorario(slot.minuto)}`);
       onFechar();
     });
   }
@@ -88,7 +88,7 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
     <div className="flex max-h-full min-h-0 flex-col">
       <header className="px-5 pt-5 pb-3">
         <DrawerTitle className="font-placar text-[2rem] leading-none">
-          {horaCurta(slot.hora)} às {horaCurta(slot.hora + 1)}
+          {rotuloHorario(slot.minuto)} às {rotuloHorario(slot.minuto + 60)}
         </DrawerTitle>
         <DrawerDescription className="mt-1 text-sm">
           {nomeDoDia(data)}, {formatarData(data, "d 'de' MMMM")}

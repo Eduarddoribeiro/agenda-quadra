@@ -1,4 +1,4 @@
-import { formatarData, horaCurta, nomeDoDia, type DataISO } from "@/lib/datas";
+import { formatarData, rotuloHorario, nomeDoDia, type DataISO } from "@/lib/datas";
 import { slotsLivresFuturos, type Slot } from "./slots";
 
 function juntar(itens: string[]): string {
@@ -18,7 +18,7 @@ export function textoHorariosLivres(dias: { data: DataISO; slots: Slot[] }[]): s
   const blocos = dias
     .map(({ data, slots }) => ({ data, livres: slotsLivresFuturos(slots) }))
     .filter((d) => d.livres.length > 0)
-    .map(({ data, livres }) => `*${rotuloDoDia(data)}*\n${juntar(livres.map((s) => horaCurta(s.hora)))}`);
+    .map(({ data, livres }) => `*${rotuloDoDia(data)}*\n${juntar(livres.map((s) => rotuloHorario(s.minuto)))}`);
 
   if (blocos.length === 0) return null;
   return `Horários livres na quadra ⚽\n\n${blocos.join("\n\n")}\n\nPara reservar, é só responder aqui.`;

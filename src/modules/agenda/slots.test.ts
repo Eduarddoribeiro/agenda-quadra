@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { rotuloHorario } from "@/lib/datas";
 import { calcularSlots, slotsLivresFuturos, type BloqueioNoSlot, type ReservaNoSlot } from "./slots";
 
 const DATA = "2026-10-20"; // terça
@@ -24,12 +25,12 @@ describe("calcularSlots", () => {
   it("gera slots de 1h dentro do funcionamento, em UTC corretamente", () => {
     const slots = calcularSlots({
       data: DATA,
-      funcionamento: { abertura: "08:00:00", fechamento: "12:00:00" },
+      periodos: [{ abertura: "08:00:00", fechamento: "12:00:00" }],
       reservas: [],
       bloqueios: [],
       agora: MADRUGADA,
     });
-    expect(slots.map((s) => s.hora)).toEqual([8, 9, 10, 11]);
+    expect(slots.map((s) => s.minuto / 60)).toEqual([8, 9, 10, 11]);
     // 08:00 em São Paulo (UTC-3) = 11:00 UTC
     expect(slots[0].inicio.toISOString()).toBe("2026-10-20T11:00:00.000Z");
     expect(slots[0].fim.toISOString()).toBe("2026-10-20T12:00:00.000Z");
@@ -37,36 +38,64 @@ describe("calcularSlots", () => {
   });
 
   it("sem funcionamento no dia, não há slots", () => {
-    expect(calcularSlots({ data: DATA, funcionamento: null, reservas: [], bloqueios: [] })).toEqual([]);
+    expect(calcularSlots({ data: DATA, periodos: [], reservas: [], bloqueios: [] })).toEqual([]);
   });
 
-  it("ignora frações de hora no funcionamento", () => {
+  it("período que começa na meia hora gera slots na meia hora", () => {
     const slots = calcularSlots({
       data: DATA,
-      funcionamento: { abertura: "08:30:00", fechamento: "11:30:00" },
+      periodos: [{ abertura: "08:30:00", fechamento: "11:45:00" }],
       reservas: [],
       bloqueios: [],
       agora: MADRUGADA,
     });
-    expect(slots.map((s) => s.hora)).toEqual([9, 10]);
+    expect(slots.map((s) => rotuloHorario(s.minuto))).toEqual(["08h30", "09h30", "10h30"]);
+    expect(slots[0].inicio.toISOString()).toBe("2026-10-20T11:30:00.000Z");
+  });
+
+  it("quarta com dois períodos: horas cheias até 18h, depois 18h30 a 22h30", () => {
+    const slots = calcularSlots({
+      data: "2026-10-21",
+      periodos: [
+        { abertura: "18:30:00", fechamento: "22:30:00" },
+        { abertura: "16:00:00", fechamento: "18:00:00" },
+      ],
+      reservas: [reserva("2026-10-21T18:30:00-03:00", "2026-10-21T19:30:00-03:00")],
+      bloqueios: [],
+      agora: MADRUGADA,
+    });
+    expect(slots.map((s) => rotuloHorario(s.minuto))).toEqual(["16h", "17h", "18h30", "19h30", "20h30", "21h30"]);
+    expect(slots.map((s) => s.estado)).toEqual(["livre", "livre", "reservado", "livre", "livre", "livre"]);
+    expect(slots.at(-1)!.fim.toISOString()).toBe("2026-10-22T01:30:00.000Z");
+  });
+
+  it("reserva antiga das 18h ocupa os dois slots que encosta na meia hora", () => {
+    const slots = calcularSlots({
+      data: DATA,
+      periodos: [{ abertura: "17:30:00", fechamento: "19:30:00" }],
+      reservas: [reserva("2026-10-20T18:00:00-03:00", "2026-10-20T19:00:00-03:00")],
+      bloqueios: [],
+      agora: MADRUGADA,
+    });
+    expect(slots.map((s) => s.estado)).toEqual(["reservado", "reservado"]);
   });
 
   it("aceita fechamento à meia-noite (24:00)", () => {
     const slots = calcularSlots({
       data: DATA,
-      funcionamento: { abertura: "22:00:00", fechamento: "24:00:00" },
+      periodos: [{ abertura: "22:00:00", fechamento: "24:00:00" }],
       reservas: [],
       bloqueios: [],
       agora: MADRUGADA,
     });
-    expect(slots.map((s) => s.hora)).toEqual([22, 23]);
+    expect(slots.map((s) => s.minuto / 60)).toEqual([22, 23]);
     expect(slots[1].fim.toISOString()).toBe("2026-10-21T03:00:00.000Z");
   });
 
   it("marca reservado e bloqueado, com reserva tendo prioridade", () => {
     const slots = calcularSlots({
       data: DATA,
-      funcionamento: { abertura: "18:00:00", fechamento: "21:00:00" },
+      periodos: [{ abertura: "18:00:00", fechamento: "21:00:00" }],
       reservas: [reserva("2026-10-20T19:00:00-03:00", "2026-10-20T20:00:00-03:00")],
       bloqueios: [bloqueio("2026-10-20T19:00:00-03:00", "2026-10-20T21:00:00-03:00")],
       agora: MADRUGADA,
@@ -79,7 +108,7 @@ describe("calcularSlots", () => {
   it("bloqueio de dia inteiro bloqueia todos os slots", () => {
     const slots = calcularSlots({
       data: DATA,
-      funcionamento: { abertura: "08:00:00", fechamento: "23:00:00" },
+      periodos: [{ abertura: "08:00:00", fechamento: "23:00:00" }],
       reservas: [],
       bloqueios: [bloqueio("2026-10-20T00:00:00-03:00", "2026-10-21T00:00:00-03:00")],
       agora: MADRUGADA,
@@ -91,7 +120,7 @@ describe("calcularSlots", () => {
   it("reserva encostada não ocupa o slot vizinho", () => {
     const slots = calcularSlots({
       data: DATA,
-      funcionamento: { abertura: "18:00:00", fechamento: "21:00:00" },
+      periodos: [{ abertura: "18:00:00", fechamento: "21:00:00" }],
       reservas: [reserva("2026-10-20T19:00:00-03:00", "2026-10-20T20:00:00-03:00")],
       bloqueios: [],
       agora: MADRUGADA,
@@ -103,7 +132,7 @@ describe("calcularSlots", () => {
   it("marca passado e agora", () => {
     const slots = calcularSlots({
       data: DATA,
-      funcionamento: { abertura: "18:00:00", fechamento: "21:00:00" },
+      periodos: [{ abertura: "18:00:00", fechamento: "21:00:00" }],
       reservas: [],
       bloqueios: [],
       agora: new Date("2026-10-20T19:30:00-03:00"),
@@ -113,6 +142,6 @@ describe("calcularSlots", () => {
       [false, true],
       [false, false],
     ]);
-    expect(slotsLivresFuturos(slots).map((s) => s.hora)).toEqual([19, 20]);
+    expect(slotsLivresFuturos(slots).map((s) => s.minuto / 60)).toEqual([19, 20]);
   });
 });

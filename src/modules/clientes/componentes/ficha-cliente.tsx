@@ -4,7 +4,8 @@ import { ChevronLeft, Pencil, Phone } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { IconeWhatsApp } from "@/components/icone-whatsapp";
-import { dataSP, formatarSP, horaSP, nomeDoDia } from "@/lib/datas";
+import { NumeralHorario } from "@/components/numeral-horario";
+import { dataSP, formatarSP, minutoSP, nomeDoDia } from "@/lib/datas";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
 import { cn } from "@/lib/utils";
 import { DrawerCliente } from "./drawer-cliente";
@@ -21,10 +22,10 @@ function LinhaHistorico({ item }: { item: ItemHistorico }) {
         href={`/?data=${data}`}
         className="grid min-h-15 grid-cols-[3.25rem_1fr_auto] items-center gap-3 px-4 py-2 outline-none focus-visible:bg-muted active:bg-muted"
       >
-        <span className={cn("font-placar text-[2rem]", cancelada && "text-muted-foreground line-through")}>
-          {String(horaSP(item.inicio)).padStart(2, "0")}
-          <span className="align-top text-xs font-bold">h</span>
-        </span>
+        <NumeralHorario
+          minuto={minutoSP(item.inicio)}
+          className={cn("text-[2rem]", cancelada && "text-muted-foreground line-through")}
+        />
         <span className="min-w-0">
           <span className={cn("block font-semibold", cancelada && "text-muted-foreground")}>
             {nomeDoDia(data)}, {formatarSP(item.inicio, "dd/MM/yy")}

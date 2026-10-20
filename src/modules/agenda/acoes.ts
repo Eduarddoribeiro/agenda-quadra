@@ -12,7 +12,8 @@ import { getAgendaDia, getQuadraPrincipal } from "./consultas";
 
 export type NovaReserva = {
   data: DataISO;
-  hora: number;
+  /** Minutos desde 00:00 do dia (ex.: 1110 = 18h30) */
+  minuto: number;
   clienteId?: string;
   novoCliente?: { nome: string; telefone: string };
   observacoes?: string;
@@ -23,11 +24,11 @@ const MSG_OCUPADO = "Esse horário acabou de ser ocupado. Escolha outro.";
 export async function criarReserva(entrada: NovaReserva): Promise<Resultado<{ reservaId: string }>> {
   const usuario = await exigirUsuario();
 
-  if (!ehDataISO(entrada.data) || !Number.isInteger(entrada.hora)) return falha("Horário inválido.");
+  if (!ehDataISO(entrada.data) || !Number.isInteger(entrada.minuto)) return falha("Horário inválido.");
 
   // Confere no servidor que o slot existe e está livre (funcionamento, bloqueios e reservas).
   const dia = await getAgendaDia(entrada.data);
-  const slot = dia.slots.find((s) => s.hora === entrada.hora);
+  const slot = dia.slots.find((s) => s.minuto === entrada.minuto);
   if (!slot) return falha("A quadra não funciona nesse horário.");
   if (slot.estado === "bloqueado") return falha(`Horário bloqueado: ${slot.bloqueio?.motivo}.`);
   if (slot.estado === "reservado") return falha(MSG_OCUPADO);
@@ -113,12 +114,12 @@ export async function editarReserva(
 }
 
 /** Move a reserva para outro horário livre (mesmo cliente). */
-export async function moverReserva(reservaId: string, data: DataISO, hora: number): Promise<Resultado> {
+export async function moverReserva(reservaId: string, data: DataISO, minuto: number): Promise<Resultado> {
   await exigirUsuario();
   if (!ehDataISO(data)) return falha("Data inválida.");
 
   const dia = await getAgendaDia(data);
-  const slot = dia.slots.find((s) => s.hora === hora);
+  const slot = dia.slots.find((s) => s.minuto === minuto);
   if (!slot) return falha("A quadra não funciona nesse horário.");
   if (slot.estado === "bloqueado") return falha(`Horário bloqueado: ${slot.bloqueio?.motivo}.`);
   if (slot.estado === "reservado" && slot.reserva?.id !== reservaId) return falha(MSG_OCUPADO);

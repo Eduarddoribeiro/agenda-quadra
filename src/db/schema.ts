@@ -9,7 +9,6 @@ import {
   text,
   time,
   timestamp,
-  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 import { authUsers } from "drizzle-orm/supabase";
@@ -75,6 +74,7 @@ export const reservas = pgTable(
   ],
 );
 
+// Um dia pode ter mais de um período (ex.: quarta 08:00–18:00 e 18:30–22:30).
 export const horariosFuncionamento = pgTable(
   "horarios_funcionamento",
   {
@@ -89,7 +89,7 @@ export const horariosFuncionamento = pgTable(
     fechamento: time("fechamento").notNull(),
   },
   (t) => [
-    unique("horarios_quadra_dia_unq").on(t.quadraId, t.diaSemana),
+    index("horarios_quadra_dia_idx").on(t.quadraId, t.diaSemana),
     check("horarios_dia_semana_valido", sql`${t.diaSemana} between 0 and 6`),
     check("horarios_fechamento_depois_abertura", sql`${t.fechamento} > ${t.abertura}`),
   ],

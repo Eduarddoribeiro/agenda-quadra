@@ -37,7 +37,7 @@ async function Conteudo() {
       <section aria-labelledby="titulo-funcionamento">
         <h2 id="titulo-funcionamento" className="font-bold">Horário de funcionamento</h2>
         <p className="mb-3 text-sm text-muted-foreground">
-          {quadra.nome}. Os horários livres são montados em jogos de 1 hora dentro deste período.
+          {quadra.nome}. Cada período vira jogos de 1 hora a partir do horário de início. Use mais de um período para horários quebrados, como 18h30.
         </p>
         <EditorHorarios horariosIniciais={horarios} />
       </section>

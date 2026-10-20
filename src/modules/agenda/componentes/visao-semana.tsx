@@ -1,10 +1,10 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { DIAS_SEMANA_CURTOS, diaDaSemana, formatarData, horaCurta, somarDias, type DataISO } from "@/lib/datas";
+import { DIAS_SEMANA_CURTOS, diaDaSemana, formatarData, rotuloHorario, somarDias, type DataISO } from "@/lib/datas";
 import { cn } from "@/lib/utils";
 import { textoHorariosLivres } from "../compartilhar";
 import type { AgendaDia } from "../consultas";
-import { slotsLivresFuturos, type Slot } from "../slots";
+import { DURACAO_SLOT, slotsLivresFuturos, type Slot } from "../slots";
 import { BotaoCompartilhar } from "./botao-compartilhar";
 
 function corDaCelula(slot: Slot) {
@@ -26,11 +26,13 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
   const texto = textoHorariosLivres(dias.filter((d) => d.data >= hoje));
   const totalLivres = dias.reduce((soma, d) => soma + slotsLivresFuturos(d.slots).length, 0);
 
-  // Eixo de horas: da primeira abertura ao último fechamento da semana.
-  const horas = dias.flatMap((d) => d.slots.map((s) => s.hora));
-  const primeira = horas.length ? Math.min(...horas) : 8;
-  const ultima = horas.length ? Math.max(...horas) + 1 : 23;
-  const colunas = ultima - primeira;
+  // Eixo de tempo em colunas de 30 min: da primeira abertura ao último fechamento da semana.
+  // Assim um jogo das 18h30 fica deslocado meia coluna em relação ao das 18h.
+  const minutos = dias.flatMap((d) => d.slots.map((s) => s.minuto));
+  const primeira = minutos.length ? Math.min(...minutos) : 8 * 60;
+  const ultima = minutos.length ? Math.max(...minutos) + DURACAO_SLOT : 23 * 60;
+  const colunas = (ultima - primeira) / 30;
+  const meio = primeira + Math.round(colunas / 2) * 30;
 
   return (
     <div>
@@ -85,9 +87,9 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
         <div className="grid grid-cols-[3.5rem_1fr_4.25rem] gap-3 pb-1 text-[11px] text-muted-foreground" aria-hidden>
           <span />
           <div className="flex justify-between">
-            <span>{horaCurta(primeira)}</span>
-            <span>{horaCurta(primeira + Math.round(colunas / 2))}</span>
-            <span>{horaCurta(ultima)}</span>
+            <span>{rotuloHorario(primeira)}</span>
+            <span>{rotuloHorario(meio)}</span>
+            <span>{rotuloHorario(ultima)}</span>
           </div>
           <span />
         </div>
@@ -122,9 +124,9 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
                     >
                       {dia.slots.map((s) => (
                         <span
-                          key={s.hora}
+                          key={s.minuto}
                           className={cn("rounded-[3px]", corDaCelula(s))}
-                          style={{ gridColumnStart: s.hora - primeira + 1 }}
+                          style={{ gridColumn: `${(s.minuto - primeira) / 30 + 1} / span ${DURACAO_SLOT / 30}` }}
                         />
                       ))}
                     </span>

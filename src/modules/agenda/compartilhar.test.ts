@@ -8,7 +8,7 @@ describe("textoHorariosLivres", () => {
   it("lista os horários livres por dia", () => {
     const slots = calcularSlots({
       data: "2026-10-20",
-      funcionamento: { abertura: "19:00:00", fechamento: "22:00:00" },
+      periodos: [{ abertura: "19:00:00", fechamento: "22:00:00" }],
       reservas: [
         {
           id: "r",

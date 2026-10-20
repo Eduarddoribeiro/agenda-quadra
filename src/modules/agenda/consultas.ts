@@ -61,11 +61,11 @@ export async function getAgenda(dataInicial: DataISO, dias: number, agora = new 
 
   return Array.from({ length: dias }, (_, i) => {
     const data = somarDias(dataInicial, i);
-    const horario = horarios.find((h) => h.diaSemana === diaDaSemana(data)) ?? null;
+    const periodos = horarios.filter((h) => h.diaSemana === diaDaSemana(data));
     return {
       data,
-      aberto: horario !== null,
-      slots: calcularSlots({ data, funcionamento: horario, ...ocupacao, agora }),
+      aberto: periodos.length > 0,
+      slots: calcularSlots({ data, periodos, ...ocupacao, agora }),
     };
   });
 }

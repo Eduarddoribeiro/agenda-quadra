@@ -2,6 +2,8 @@ import { instanteSP, minutosDoHorario, somarDias, type DataISO } from "@/lib/dat
 
 // Lógica pura (sem banco) dos slots de 1 hora. Os horários livres são calculados:
 // slots dentro do funcionamento, menos reservas confirmadas e bloqueios.
+// Um dia pode ter vários períodos (ex.: quarta 08:00–18:00 e 18:30–22:30),
+// e cada período gera slots de 1h a partir da sua abertura.
 
 export type Intervalo = { inicio: Date; fim: Date };
 
@@ -15,13 +17,15 @@ export type ReservaNoSlot = Intervalo & {
 
 export type BloqueioNoSlot = Intervalo & { id: string; motivo: string };
 
-export type Funcionamento = { abertura: string; fechamento: string } | null;
+export type Periodo = { abertura: string; fechamento: string };
+
+export const DURACAO_SLOT = 60;
 
 export type EstadoSlot = "livre" | "reservado" | "bloqueado";
 
 export type Slot = {
-  /** Hora de início no fuso da quadra (pode passar de 23 se fecha depois da meia-noite). */
-  hora: number;
+  /** Início em minutos desde 00:00 do dia, no fuso da quadra (ex.: 1110 = 18h30). */
+  minuto: number;
   inicio: Date;
   fim: Date;
   estado: EstadoSlot;
@@ -37,37 +41,48 @@ export function sobrepoe(a: Intervalo, b: Intervalo): boolean {
   return a.inicio < b.fim && b.inicio < a.fim;
 }
 
-/** Instante de uma hora cheia do dia, aceitando horas ≥ 24 (dia seguinte). */
-function instanteDaHora(data: DataISO, hora: number): Date {
-  const dia = somarDias(data, Math.floor(hora / 24));
-  return instanteSP(dia, `${String(hora % 24).padStart(2, "0")}:00`);
+/** Instante de um minuto do dia, aceitando valores ≥ 24h (dia seguinte). */
+function instanteDoMinuto(data: DataISO, minuto: number): Date {
+  const dia = somarDias(data, Math.floor(minuto / 1440));
+  const m = minuto % 1440;
+  return instanteSP(dia, `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
+}
+
+/** Minutos de início de cada slot: de 1 em 1 hora a partir da abertura de cada período. */
+export function iniciosDosSlots(periodos: Periodo[]): number[] {
+  const inicios: number[] = [];
+  for (const p of [...periodos].sort((a, b) => minutosDoHorario(a.abertura) - minutosDoHorario(b.abertura))) {
+    const fechamento = minutosDoHorario(p.fechamento);
+    for (let m = minutosDoHorario(p.abertura); m + DURACAO_SLOT <= fechamento; m += DURACAO_SLOT) {
+      // Períodos sobrepostos (não deveriam existir) não geram slot duplicado.
+      if (inicios.length && m < inicios.at(-1)! + DURACAO_SLOT) continue;
+      inicios.push(m);
+    }
+  }
+  return inicios;
 }
 
 export function calcularSlots(params: {
   data: DataISO;
-  funcionamento: Funcionamento;
+  /** Vazio = fechado no dia */
+  periodos: Periodo[];
   reservas: ReservaNoSlot[];
   bloqueios: BloqueioNoSlot[];
   agora?: Date;
 }): Slot[] {
-  const { data, funcionamento, reservas, bloqueios, agora = new Date() } = params;
-  if (!funcionamento) return [];
-
-  // Só slots inteiros: abertura arredonda para cima, fechamento para baixo.
-  const primeiraHora = Math.ceil(minutosDoHorario(funcionamento.abertura) / 60);
-  const ultimaHora = Math.floor(minutosDoHorario(funcionamento.fechamento) / 60);
+  const { data, periodos, reservas, bloqueios, agora = new Date() } = params;
 
   const slots: Slot[] = [];
-  for (let hora = primeiraHora; hora < ultimaHora; hora++) {
-    const inicio = instanteDaHora(data, hora);
-    const fim = instanteDaHora(data, hora + 1);
+  for (const minuto of iniciosDosSlots(periodos)) {
+    const inicio = instanteDoMinuto(data, minuto);
+    const fim = instanteDoMinuto(data, minuto + DURACAO_SLOT);
     const intervalo = { inicio, fim };
 
     const reserva = reservas.find((r) => sobrepoe(r, intervalo));
     const bloqueio = reserva ? undefined : bloqueios.find((b) => sobrepoe(b, intervalo));
 
     slots.push({
-      hora,
+      minuto,
       inicio,
       fim,
       estado: reserva ? "reservado" : bloqueio ? "bloqueado" : "livre",

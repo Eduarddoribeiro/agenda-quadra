@@ -2,6 +2,8 @@
 
 import { Plus } from "lucide-react";
 import { IconeWhatsApp } from "@/components/icone-whatsapp";
+import { NumeralHorario } from "@/components/numeral-horario";
+import { rotuloHorario } from "@/lib/datas";
 import { cn } from "@/lib/utils";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
 import type { Slot } from "../slots";
@@ -12,23 +14,22 @@ type Props = {
   onAbrirReserva: (slot: Slot) => void;
 };
 
-/** Numeral de placar: "19" grande e o "h" pequeno, alinhado no topo. */
 function Hora({ slot }: { slot: Slot }) {
   return (
-    <div
-      className={cn(
-        "font-placar flex items-start pt-2 text-[2.75rem] select-none",
-        slot.agora ? "text-agora" : slot.passado ? "text-muted-foreground/60" : "text-foreground",
-      )}
-    >
-      {String(slot.hora % 24).padStart(2, "0")}
-      <span className="mt-1 ml-0.5 text-base font-bold">h</span>
+    <div className="pt-2">
+      <NumeralHorario
+        minuto={slot.minuto}
+        className={cn(
+          "text-[2.75rem]",
+          slot.agora ? "text-agora" : slot.passado ? "text-muted-foreground/60" : "text-foreground",
+        )}
+      />
     </div>
   );
 }
 
 export function LinhaSlot({ slot, onReservar, onAbrirReserva }: Props) {
-  const fimHora = `${String((slot.hora + 1) % 24).padStart(2, "0")}h`;
+  const fimHora = rotuloHorario(slot.minuto + 60);
 
   return (
     <li className="relative grid grid-cols-[4.25rem_1fr] gap-2">
