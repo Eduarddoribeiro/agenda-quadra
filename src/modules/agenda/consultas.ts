@@ -2,7 +2,9 @@ import "server-only";
 import { and, asc, eq, gt, lt } from "drizzle-orm";
 import { db } from "@/db";
 import { bloqueios, clientes, horariosFuncionamento, quadras, reservas } from "@/db/schema";
-import { diaDaSemana, instanteSP, somarDias, type DataISO } from "@/lib/datas";
+import { diaDaSemana, hojeSP, instanteSP, somarDias, type DataISO } from "@/lib/datas";
+import { garantirReservasFixas } from "./fixas";
+import { SEMANAS_INICIAIS } from "./recorrencia";
 import { calcularSlots, type BloqueioNoSlot, type ReservaNoSlot, type Slot } from "./slots";
 
 export async function getQuadraPrincipal() {
@@ -22,6 +24,7 @@ async function buscarOcupacao(quadraId: string, de: Date, ate: Date) {
         inicio: reservas.inicio,
         fim: reservas.fim,
         observacoes: reservas.observacoes,
+        fixaId: reservas.fixaId,
         clienteId: clientes.id,
         clienteNome: clientes.nome,
         clienteTelefone: clientes.telefone,
@@ -53,6 +56,11 @@ export async function getAgenda(dataInicial: DataISO, dias: number, agora = new 
   // Funcionamento vai no máximo até 24:00, então o intervalo cobre todos os slots.
   const de = instanteSP(dataInicial, "00:00");
   const ate = instanteSP(somarDias(dataInicial, dias), "00:00");
+
+  // Horários fixos: cria as reservas semanais que faltam (no mínimo ~3 meses à frente de hoje).
+  const ultimoDia = somarDias(dataInicial, dias - 1);
+  const horizonte = somarDias(hojeSP(agora), 7 * SEMANAS_INICIAIS);
+  await garantirReservasFixas(quadra.id, ultimoDia > horizonte ? ultimoDia : horizonte);
 
   const [horarios, ocupacao] = await Promise.all([
     db.query.horariosFuncionamento.findMany({ where: eq(horariosFuncionamento.quadraId, quadra.id) }),

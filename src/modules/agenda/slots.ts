@@ -13,6 +13,8 @@ export type ReservaNoSlot = Intervalo & {
   clienteNome: string;
   clienteTelefone: string | null;
   observacoes: string | null;
+  /** Veio de um horário fixo (toda semana) */
+  fixaId: string | null;
 };
 
 export type BloqueioNoSlot = Intervalo & { id: string; motivo: string };

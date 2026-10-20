@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, Pencil, Phone } from "lucide-react";
+import { ChevronLeft, Pencil, Phone, Repeat } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { IconeWhatsApp } from "@/components/icone-whatsapp";
@@ -11,7 +11,16 @@ import { cn } from "@/lib/utils";
 import { DrawerCliente } from "./drawer-cliente";
 
 type Cliente = { id: string; nome: string; telefone: string | null; observacoes: string | null; createdAt: Date };
-type ItemHistorico = { id: string; inicio: Date; fim: Date; status: "confirmada" | "cancelada"; observacoes: string | null };
+type ItemHistorico = {
+  id: string;
+  inicio: Date;
+  fim: Date;
+  status: "confirmada" | "cancelada";
+  observacoes: string | null;
+  fixaId: string | null;
+};
+
+const PROXIMOS_VISIVEIS = 4;
 
 function LinhaHistorico({ item }: { item: ItemHistorico }) {
   const data = dataSP(item.inicio);
@@ -27,8 +36,9 @@ function LinhaHistorico({ item }: { item: ItemHistorico }) {
           className={cn("text-[2rem]", cancelada && "text-muted-foreground line-through")}
         />
         <span className="min-w-0">
-          <span className={cn("block font-semibold", cancelada && "text-muted-foreground")}>
+          <span className={cn("flex items-center gap-1.5 font-semibold", cancelada && "text-muted-foreground")}>
             {nomeDoDia(data)}, {formatarSP(item.inicio, "dd/MM/yy")}
+            {item.fixaId && <Repeat className="size-3.5 text-muted-foreground" aria-label="Horário fixo" />}
           </span>
           {item.observacoes && <span className="block truncate text-xs text-muted-foreground">{item.observacoes}</span>}
         </span>
@@ -41,13 +51,17 @@ function LinhaHistorico({ item }: { item: ItemHistorico }) {
 export function FichaCliente({
   cliente,
   historico,
+  fixos,
   agora,
 }: {
   cliente: Cliente;
   historico: ItemHistorico[];
+  /** Ex.: "toda quarta às 18h30" */
+  fixos: string[];
   agora: Date;
 }) {
   const [editando, setEditando] = useState(false);
+  const [verTodos, setVerTodos] = useState(false);
 
   // Próximos = jogos marcados que ainda vão acontecer; o resto (inclusive cancelados) é histórico.
   const marcado = (h: ItemHistorico) => h.status === "confirmada" && h.fim > agora;
@@ -125,12 +139,42 @@ export function FichaCliente({
         </dl>
       </header>
 
+      {fixos.length > 0 && (
+        <section className="mt-6 px-4" aria-labelledby="titulo-fixos">
+          <h2 id="titulo-fixos" className="mb-2 font-bold">Horário fixo</h2>
+          <ul className="space-y-2">
+            {fixos.map((f) => (
+              <li key={f} className="flex items-center gap-3 rounded-xl bg-primary px-4 py-3 text-primary-foreground">
+                <Repeat className="size-5 shrink-0" aria-hidden />
+                <span className="font-semibold first-letter:uppercase">{f}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Para encerrar, abra um jogo dele na agenda e toque em cancelar.
+          </p>
+        </section>
+      )}
+
       <section className="mt-6 px-4" aria-labelledby="titulo-proximos">
         <h2 id="titulo-proximos" className="mb-2 font-bold">Próximos jogos</h2>
         {proximos.length ? (
-          <ul className="divide-y rounded-xl border bg-card">
-            {proximos.map((h) => <LinhaHistorico key={h.id} item={h} />)}
-          </ul>
+          <>
+            <ul className="divide-y rounded-xl border bg-card">
+              {(verTodos ? proximos : proximos.slice(0, PROXIMOS_VISIVEIS)).map((h) => (
+                <LinhaHistorico key={h.id} item={h} />
+              ))}
+            </ul>
+            {!verTodos && proximos.length > PROXIMOS_VISIVEIS && (
+              <button
+                type="button"
+                onClick={() => setVerTodos(true)}
+                className="mt-1 h-11 w-full rounded-full text-sm font-semibold text-muted-foreground active:bg-muted"
+              >
+                Ver mais {proximos.length - PROXIMOS_VISIVEIS} {proximos.length - PROXIMOS_VISIVEIS === 1 ? "jogo" : "jogos"}
+              </button>
+            )}
+          </>
         ) : (
           <p className="rounded-xl border border-dashed px-4 py-4 text-sm text-muted-foreground">
             Nenhum jogo marcado. Para reservar, toque num horário livre na tela Hoje.

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Loader2, Phone, UserRound } from "lucide-react";
+import { ArrowLeftRight, Loader2, Phone, Repeat, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -9,10 +9,11 @@ import { NumeralHorario } from "@/components/numeral-horario";
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { formatarData, rotuloHorario, nomeDoDia, type DataISO } from "@/lib/datas";
+import { diaDaSemana, formatarData, nomeDoDia, rotuloHorario, type DataISO } from "@/lib/datas";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
 import { cn } from "@/lib/utils";
-import { cancelarReserva, editarReserva, moverReserva, reativarReserva } from "../acoes";
+import { cancelarReserva, editarReserva, encerrarFixa, moverReserva, reativarReserva } from "../acoes";
+import { rotuloFixo } from "../recorrencia";
 import type { Slot } from "../slots";
 
 type Props = {
@@ -44,6 +45,7 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
   const [pendente, startTransition] = useTransition();
 
   const dataLegivel = `${nomeDoDia(data)}, ${formatarData(data, "dd/MM")}`;
+  const fixo = rotuloFixo(diaDaSemana(data), slot.minuto);
   const mensagem = `Olá, ${reserva.clienteNome.split(" ")[0]}! Confirmando sua reserva na quadra: ${dataLegivel.toLowerCase()}, das ${rotuloHorario(slot.minuto)} às ${rotuloHorario(slot.minuto + 60)}.`;
   const obsAlterada = observacoes.trim() !== (reserva.observacoes ?? "");
 
@@ -61,6 +63,18 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
       if (!r.ok) return void toast.error(r.erro);
       toast.success(`${reserva.clienteNome} agora às ${rotuloHorario(destino.minuto)}`);
       onFechar();
+    });
+  }
+
+  function encerrar() {
+    startTransition(async () => {
+      const r = await encerrarFixa(reserva.id);
+      if (!r.ok) return void toast.error(r.erro);
+      onFechar();
+      const n = r.dados.canceladas;
+      toast(`Horário fixo de ${reserva.clienteNome} encerrado`, {
+        description: `${n} ${n === 1 ? "jogo cancelado" : "jogos cancelados"}, a partir de ${dataLegivel.toLowerCase()}.`,
+      });
     });
   }
 
@@ -92,6 +106,12 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
           <DrawerDescription className="mt-0.5 text-sm">
             {dataLegivel}, {rotuloHorario(slot.minuto)} às {rotuloHorario(slot.minuto + 60)}
           </DrawerDescription>
+          {reserva.fixaId && (
+            <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
+              <Repeat className="size-3.5" aria-hidden />
+              <span className="first-letter:uppercase">Fixo {fixo}</span>
+            </p>
+          )}
         </div>
         <NumeralHorario minuto={slot.minuto} className="shrink-0 text-5xl" />
       </header>
@@ -203,27 +223,63 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
         {modo === "cancelar" && (
           <div className="rounded-xl border-2 border-destructive/40 p-4">
             <p className="font-bold">Cancelar a reserva de {reserva.clienteNome}?</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              O horário das {rotuloHorario(slot.minuto)} volta a ficar livre.
-            </p>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setModo("ver")}
-                className="h-12 rounded-full border font-semibold"
-              >
-                Manter
-              </button>
-              <button
-                type="button"
-                onClick={cancelar}
-                disabled={pendente}
-                className="flex h-12 items-center justify-center gap-2 rounded-full bg-destructive font-bold text-white disabled:opacity-50"
-              >
-                {pendente && <Loader2 className="size-4 animate-spin" aria-hidden />}
-                Cancelar reserva
-              </button>
-            </div>
+            {reserva.fixaId ? (
+              <>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  É um horário fixo ({fixo}). Escolha se é só este dia ou se ele parou de vir.
+                </p>
+                <div className="mt-4 grid gap-2">
+                  <button
+                    type="button"
+                    onClick={cancelar}
+                    disabled={pendente}
+                    className="flex h-12 items-center justify-center gap-2 rounded-full bg-destructive font-bold text-white disabled:opacity-50"
+                  >
+                    Cancelar só {dataLegivel.toLowerCase()}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={encerrar}
+                    disabled={pendente}
+                    className="flex h-12 items-center justify-center gap-2 rounded-full border-2 border-destructive font-bold text-destructive disabled:opacity-50"
+                  >
+                    {pendente && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                    Cancelar este e os próximos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModo("ver")}
+                    className="h-11 rounded-full text-sm font-semibold text-muted-foreground"
+                  >
+                    Manter
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  O horário das {rotuloHorario(slot.minuto)} volta a ficar livre.
+                </p>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModo("ver")}
+                    className="h-12 rounded-full border font-semibold"
+                  >
+                    Manter
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelar}
+                    disabled={pendente}
+                    className="flex h-12 items-center justify-center gap-2 rounded-full bg-destructive font-bold text-white disabled:opacity-50"
+                  >
+                    {pendente && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                    Cancelar reserva
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

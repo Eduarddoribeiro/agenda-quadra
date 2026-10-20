@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, Repeat } from "lucide-react";
 import { IconeWhatsApp } from "@/components/icone-whatsapp";
 import { NumeralHorario } from "@/components/numeral-horario";
 import { rotuloHorario } from "@/lib/datas";
@@ -78,7 +78,10 @@ export function LinhaSlot({ slot, onReservar, onAbrirReserva }: Props) {
             onClick={() => onAbrirReserva(slot)}
             className="min-w-0 flex-1 border-l-4 border-l-foreground py-2.5 pr-2 pl-3 text-left outline-none focus-visible:bg-muted"
           >
-            <span className="block truncate text-base font-bold">{slot.reserva.clienteNome}</span>
+            <span className="flex items-center gap-1.5">
+              {slot.reserva.fixaId && <Repeat className="size-4 shrink-0" aria-label="Horário fixo" />}
+              <span className="truncate text-base font-bold">{slot.reserva.clienteNome}</span>
+            </span>
             <span className="block truncate text-xs text-muted-foreground">
               {slot.reserva.observacoes || formatarTelefone(slot.reserva.clienteTelefone) || "Sem telefone"}
             </span>

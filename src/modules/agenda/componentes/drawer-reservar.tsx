@@ -1,17 +1,18 @@
 "use client";
 
-import { Check, Loader2, Search, UserPlus, X } from "lucide-react";
+import { Check, Loader2, Repeat, Search, UserPlus, X } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatarData, rotuloHorario, nomeDoDia, type DataISO } from "@/lib/datas";
+import { diaDaSemana, formatarData, nomeDoDia, rotuloHorario, type DataISO } from "@/lib/datas";
 import { formatarTelefone } from "@/lib/telefone";
 import { cn } from "@/lib/utils";
 import { pesquisarClientes } from "@/modules/clientes/acoes";
 import type { ClienteResumo } from "@/modules/clientes/consultas";
 import { criarReserva } from "../acoes";
+import { rotuloFixo } from "../recorrencia";
 import type { Slot } from "../slots";
 
 type Props = {
@@ -39,6 +40,8 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
   const [novoNome, setNovoNome] = useState("");
   const [novoTelefone, setNovoTelefone] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [repetir, setRepetir] = useState(false);
+  const fixo = rotuloFixo(diaDaSemana(data), slot.minuto);
   const [buscando, startBusca] = useTransition();
   const [salvando, startSalvar] = useTransition();
 
@@ -73,13 +76,27 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
         clienteId: selecionado?.id,
         novoCliente: cadastrando ? { nome: novoNome, telefone: novoTelefone } : undefined,
         observacoes,
+        repetirSemanal: repetir,
       });
       if (!resultado.ok) {
         toast.error(resultado.erro);
         return;
       }
       const nome = selecionado?.nome ?? novoNome.trim();
-      toast.success(`Reservado: ${nome}, ${rotuloHorario(slot.minuto)}`);
+      const { semanas, puladas } = resultado.dados;
+      if (!repetir) {
+        toast.success(`Reservado: ${nome}, ${rotuloHorario(slot.minuto)}`);
+      } else if (puladas.length) {
+        // Avisa sem esconder: essas semanas o horário já tinha dono ou estava bloqueado.
+        toast.warning(`${nome}: fixo ${fixo}`, {
+          description: `${semanas} semanas marcadas. Ficaram de fora (ocupado ou bloqueado): ${puladas
+            .map((d) => formatarData(d, "dd/MM"))
+            .join(", ")}.`,
+          duration: 12000,
+        });
+      } else {
+        toast.success(`${nome}: fixo ${fixo}`, { description: `${semanas} semanas já marcadas. As próximas entram sozinhas.` });
+      }
       onFechar();
     });
   }
@@ -215,6 +232,31 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
               placeholder="Ex.: traz a própria bola"
               autoComplete="off"
             />
+
+            {/* Cliente fixo: escolinha, turma da firma etc. */}
+            <label
+              className={cn(
+                "mt-3 flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border-2 px-4 py-2 transition-colors",
+                repetir ? "border-foreground bg-card" : "border-dashed",
+              )}
+            >
+              <Repeat className="size-5 shrink-0" aria-hidden />
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold">Repetir toda semana</span>
+                <span className="block text-xs text-muted-foreground first-letter:uppercase">{fixo}</span>
+              </span>
+              <input
+                type="checkbox"
+                role="switch"
+                checked={repetir}
+                onChange={(e) => setRepetir(e.target.checked)}
+                className="peer sr-only"
+              />
+              <span
+                aria-hidden
+                className="relative h-7 w-12 shrink-0 rounded-full bg-muted transition-colors peer-checked:bg-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/60 after:absolute after:top-1 after:left-1 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5"
+              />
+            </label>
           </div>
         )}
       </div>
@@ -229,7 +271,7 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
           )}
         >
           {salvando && <Loader2 className="size-5 animate-spin" aria-hidden />}
-          Confirmar reserva
+          {repetir ? "Confirmar horário fixo" : "Confirmar reserva"}
         </button>
       </footer>
     </div>

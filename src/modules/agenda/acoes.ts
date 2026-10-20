@@ -1,14 +1,16 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { db } from "@/db";
-import { clientes, reservas } from "@/db/schema";
+import { clientes, reservas, reservasFixas } from "@/db/schema";
 import { exigirUsuario } from "@/lib/auth";
-import { ehDataISO, type DataISO } from "@/lib/datas";
+import { dataSP, diaDaSemana, ehDataISO, formatarSP, somarDias, type DataISO } from "@/lib/datas";
 import { codigoPg, falha, sucesso, type Resultado } from "@/lib/resultado";
 import { normalizarTelefone, telefoneValido } from "@/lib/telefone";
 import { getAgendaDia, getQuadraPrincipal } from "./consultas";
+import { gerarReservasDoFixo } from "./fixas";
+import { SEMANAS_INICIAIS } from "./recorrencia";
 
 export type NovaReserva = {
   data: DataISO;
@@ -17,11 +19,15 @@ export type NovaReserva = {
   clienteId?: string;
   novoCliente?: { nome: string; telefone: string };
   observacoes?: string;
+  /** Marca o mesmo dia da semana e horário toda semana, a partir desta data */
+  repetirSemanal?: boolean;
 };
 
 const MSG_OCUPADO = "Esse horário acabou de ser ocupado. Escolha outro.";
 
-export async function criarReserva(entrada: NovaReserva): Promise<Resultado<{ reservaId: string }>> {
+export async function criarReserva(
+  entrada: NovaReserva,
+): Promise<Resultado<{ reservaId: string; semanas: number; puladas: DataISO[] }>> {
   const usuario = await exigirUsuario();
 
   if (!ehDataISO(entrada.data) || !Number.isInteger(entrada.minuto)) return falha("Horário inválido.");
@@ -45,12 +51,36 @@ export async function criarReserva(entrada: NovaReserva): Promise<Resultado<{ re
   const quadra = await getQuadraPrincipal();
 
   try {
-    const reservaId = await db.transaction(async (tx) => {
+    const criada = await db.transaction(async (tx) => {
       let clienteId = entrada.clienteId;
       if (!clienteId && novoCliente) {
-        const [criado] = await tx.insert(clientes).values(novoCliente).returning({ id: clientes.id });
-        clienteId = criado.id;
+        const [cliente] = await tx.insert(clientes).values(novoCliente).returning({ id: clientes.id });
+        clienteId = cliente.id;
       }
+      const observacoes = entrada.observacoes?.trim() || null;
+
+      if (entrada.repetirSemanal) {
+        const [fixa] = await tx
+          .insert(reservasFixas)
+          .values({
+            quadraId: quadra.id,
+            clienteId: clienteId!,
+            diaSemana: diaDaSemana(entrada.data),
+            horario: formatarSP(slot.inicio, "HH:mm"),
+            inicioVigencia: entrada.data,
+            geradaAte: somarDias(entrada.data, -1),
+            observacoes,
+            criadoPor: usuario.id,
+          })
+          .returning();
+        const ate = somarDias(entrada.data, 7 * (SEMANAS_INICIAIS - 1));
+        const { criadas, puladas } = await gerarReservasDoFixo(tx, fixa, ate);
+        const primeira = criadas.find((c) => c.data === entrada.data);
+        // O primeiro jogo é o que a pessoa tocou: se ele não entrou, alguém pegou o horário agora.
+        if (!primeira) throw new HorarioOcupado();
+        return { reservaId: primeira.id, semanas: criadas.length, puladas };
+      }
+
       const [reserva] = await tx
         .insert(reservas)
         .values({
@@ -58,20 +88,51 @@ export async function criarReserva(entrada: NovaReserva): Promise<Resultado<{ re
           clienteId: clienteId!,
           inicio: slot.inicio,
           fim: slot.fim,
-          observacoes: entrada.observacoes?.trim() || null,
+          observacoes,
           criadoPor: usuario.id,
         })
         .returning({ id: reservas.id });
-      return reserva.id;
+      return { reservaId: reserva.id, semanas: 1, puladas: [] };
     });
 
     refresh();
-    return sucesso({ reservaId });
+    return sucesso(criada);
   } catch (erro) {
     // 23P01 = exclusion_violation: outra reserva pegou o horário ao mesmo tempo.
-    if (codigoPg(erro) === "23P01") return falha(MSG_OCUPADO);
+    if (erro instanceof HorarioOcupado || codigoPg(erro) === "23P01") return falha(MSG_OCUPADO);
     throw erro;
   }
+}
+
+class HorarioOcupado extends Error {}
+
+/**
+ * Encerra um horário fixo a partir do jogo informado: cancela esse e os próximos
+ * e para de criar novos. Os jogos que já aconteceram ficam no histórico.
+ */
+export async function encerrarFixa(reservaId: string): Promise<Resultado<{ canceladas: number }>> {
+  await exigirUsuario();
+  const reserva = await db.query.reservas.findFirst({ where: eq(reservas.id, reservaId) });
+  if (!reserva?.fixaId) return falha("Essa reserva não é de um horário fixo.");
+
+  const desde = reserva.inicio;
+  const canceladas = await db.transaction(async (tx) => {
+    await tx
+      .update(reservasFixas)
+      .set({ fimVigencia: somarDias(dataSP(desde), -1) })
+      .where(eq(reservasFixas.id, reserva.fixaId!));
+    const linhas = await tx
+      .update(reservas)
+      .set({ status: "cancelada" })
+      .where(
+        and(eq(reservas.fixaId, reserva.fixaId!), eq(reservas.status, "confirmada"), gte(reservas.inicio, desde)),
+      )
+      .returning({ id: reservas.id });
+    return linhas.length;
+  });
+
+  refresh();
+  return sucesso({ canceladas });
 }
 
 export async function cancelarReserva(reservaId: string): Promise<Resultado> {

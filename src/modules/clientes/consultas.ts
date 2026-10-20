@@ -62,7 +62,7 @@ export async function getCliente(id: string) {
 
 export async function getHistoricoCliente(clienteId: string) {
   return db
-    .select({ id: reservas.id, inicio: reservas.inicio, fim: reservas.fim, status: reservas.status, observacoes: reservas.observacoes })
+    .select({ id: reservas.id, inicio: reservas.inicio, fim: reservas.fim, status: reservas.status, observacoes: reservas.observacoes, fixaId: reservas.fixaId })
     .from(reservas)
     .where(eq(reservas.clienteId, clienteId))
     .orderBy(desc(reservas.inicio))

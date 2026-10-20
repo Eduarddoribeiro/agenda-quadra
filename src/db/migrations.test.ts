@@ -55,6 +55,15 @@ describe("reservas_sem_sobreposicao", () => {
     );
   });
 
+  it("ON CONFLICT DO NOTHING pula o horário ocupado sem erro (usado nos horários fixos)", async () => {
+    await reservar("2026-10-21T18:30-03", "2026-10-21T19:30-03");
+    const r = await pg.query(
+      `insert into reservas (quadra_id, cliente_id, inicio, fim) values ($1, $2, $3, $4) on conflict do nothing returning id`,
+      [quadraId, clienteId, "2026-10-21T18:30-03", "2026-10-21T19:30-03"],
+    );
+    expect(r.rows).toHaveLength(0);
+  });
+
   it("ignora reservas canceladas", async () => {
     await reservar("2026-10-20T19:00-03", "2026-10-20T20:00-03", "cancelada");
     expect(await erroDe(reservar("2026-10-20T19:00-03", "2026-10-20T20:00-03"))).toBeNull();

@@ -4,6 +4,9 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { exigirUsuario } from "@/lib/auth";
+import { hojeSP, minutosDoHorario } from "@/lib/datas";
+import { getFixasDoCliente } from "@/modules/agenda/fixas";
+import { rotuloFixo } from "@/modules/agenda/recorrencia";
 import { getCliente, getHistoricoCliente } from "@/modules/clientes/consultas";
 import { FichaCliente } from "@/modules/clientes/componentes/ficha-cliente";
 
@@ -25,10 +28,22 @@ async function Ficha({ params }: Pick<PageProps<"/clientes/[id]">, "params">) {
   await exigirUsuario();
   if (!REGEX_UUID.test(id)) notFound();
 
-  const [cliente, historico] = await Promise.all([getCliente(id), getHistoricoCliente(id)]);
+  const agora = new Date();
+  const [cliente, historico, fixos] = await Promise.all([
+    getCliente(id),
+    getHistoricoCliente(id),
+    getFixasDoCliente(id, hojeSP(agora)),
+  ]);
   if (!cliente) notFound();
 
-  return <FichaCliente cliente={cliente} historico={historico} agora={new Date()} />;
+  return (
+    <FichaCliente
+      cliente={cliente}
+      historico={historico}
+      fixos={fixos.map((f) => rotuloFixo(f.diaSemana, minutosDoHorario(f.horario)))}
+      agora={agora}
+    />
+  );
 }
 
 function EsqueletoFicha() {

@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  date,
   index,
   pgEnum,
   pgTable,
@@ -48,6 +49,38 @@ export const clientes = pgTable(
   (t) => [index("clientes_nome_idx").on(t.nome)],
 );
 
+// Cliente fixo: joga toda semana no mesmo dia e horário (ex.: escolinha toda quarta 18h30).
+// As reservas de cada semana são criadas a partir daqui (ver modules/agenda/fixas.ts),
+// então a regra contra sobreposição continua valendo para cada jogo.
+export const reservasFixas = pgTable(
+  "reservas_fixas",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    quadraId: uuid("quadra_id")
+      .notNull()
+      .references(() => quadras.id),
+    clienteId: uuid("cliente_id")
+      .notNull()
+      .references(() => clientes.id),
+    // 0 = domingo ... 6 = sábado
+    diaSemana: smallint("dia_semana").notNull(),
+    // Hora de parede em America/Sao_Paulo
+    horario: time("horario").notNull(),
+    // Primeiro dia e, se encerrado, último dia (datas de calendário em São Paulo)
+    inicioVigencia: date("inicio_vigencia").notNull(),
+    fimVigencia: date("fim_vigencia"),
+    // Até que data as reservas semanais já foram criadas
+    geradaAte: date("gerada_ate").notNull(),
+    observacoes: text("observacoes"),
+    criadoPor: uuid("criado_por").references(() => usuarios.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("reservas_fixas_dia_semana_valido", sql`${t.diaSemana} between 0 and 6`),
+    index("reservas_fixas_cliente_idx").on(t.clienteId),
+  ],
+);
+
 export const reservas = pgTable(
   "reservas",
   {
@@ -63,12 +96,15 @@ export const reservas = pgTable(
     status: statusReserva("status").notNull().default("confirmada"),
     observacoes: text("observacoes"),
     criadoPor: uuid("criado_por").references(() => usuarios.id, { onDelete: "set null" }),
+    // Preenchido quando a reserva veio de um horário fixo
+    fixaId: uuid("fixa_id").references(() => reservasFixas.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     // Preço e pagamento entram aqui no futuro (ver próximos passos no README).
   },
   (t) => [
     check("reservas_fim_depois_inicio", sql`${t.fim} > ${t.inicio}`),
     index("reservas_cliente_idx").on(t.clienteId),
+    index("reservas_fixa_idx").on(t.fixaId),
     // A exclusion constraint contra sobreposição está na migration custom
     // (drizzle não modela EXCLUDE USING gist).
   ],
@@ -116,6 +152,7 @@ export const bloqueios = pgTable(
 export type Quadra = typeof quadras.$inferSelect;
 export type Cliente = typeof clientes.$inferSelect;
 export type Reserva = typeof reservas.$inferSelect;
+export type ReservaFixa = typeof reservasFixas.$inferSelect;
 export type HorarioFuncionamento = typeof horariosFuncionamento.$inferSelect;
 export type Bloqueio = typeof bloqueios.$inferSelect;
 export type Usuario = typeof usuarios.$inferSelect;

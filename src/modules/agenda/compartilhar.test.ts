@@ -16,6 +16,7 @@ describe("textoHorariosLivres", () => {
           clienteNome: "Ana",
           clienteTelefone: null,
           observacoes: null,
+          fixaId: null,
           inicio: new Date("2026-10-20T20:00:00-03:00"),
           fim: new Date("2026-10-20T21:00:00-03:00"),
         },

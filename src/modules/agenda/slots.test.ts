@@ -12,6 +12,7 @@ function reserva(inicio: string, fim: string): ReservaNoSlot {
     clienteNome: "Ana",
     clienteTelefone: "5547999990000",
     observacoes: null,
+    fixaId: null,
     inicio: new Date(inicio),
     fim: new Date(fim),
   };
