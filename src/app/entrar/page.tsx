@@ -1,31 +1,32 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import Image from "next/image";
+import logo from "./logo.webp";
 import { FormularioLogin } from "./formulario-login";
 
 export const metadata: Metadata = { title: "Entrar" };
 
+// Fundo preto igual ao do escudo, inclusive na barra do navegador.
+export const viewport: Viewport = { themeColor: "#000000" };
+
 export default function PaginaEntrar() {
   return (
-    <main className="pt-seguro mx-auto flex min-h-dvh max-w-md flex-col px-6">
-      {/* Meia quadra vista de cima: linha de fundo, área e meio-campo */}
-      <div aria-hidden className="relative mt-10 h-40 overflow-hidden rounded-2xl bg-livre">
-        <div className="absolute inset-3 rounded-lg border-2 border-white/70" />
-        <div className="absolute top-1/2 left-1/2 size-24 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/70" />
-        <div className="absolute top-3 bottom-3 left-1/2 w-0.5 -translate-x-1/2 bg-white/70" />
-        <div className="absolute top-1/2 left-3 h-20 w-10 -translate-y-1/2 rounded-r-full border-2 border-l-0 border-white/70" />
-        <div className="absolute top-1/2 right-3 h-20 w-10 -translate-y-1/2 rounded-l-full border-2 border-r-0 border-white/70" />
-        <div className="absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
-      </div>
+    <div className="min-h-dvh bg-black text-white">
+      <main className="pt-seguro pb-seguro mx-auto flex min-h-dvh max-w-md flex-col px-6">
+        <Image
+          src={logo}
+          alt="Ginásio do Krahe, Viamão RS"
+          priority
+          sizes="(max-width: 448px) 72vw, 320px"
+          className="mx-auto mt-6 w-[72%] max-w-80"
+        />
 
-      <h1 className="font-placar mt-8 text-[3.5rem] leading-[0.85]">Agenda da quadra</h1>
-      <p className="mt-3 text-muted-foreground">Entre para ver os horários e marcar jogos.</p>
+        <h1 className="font-placar mt-2 text-center text-[2.5rem] leading-none">Agenda da quadra</h1>
+        <p className="mt-2 text-center text-white/60">Entre para ver os horários e marcar jogos.</p>
 
-      <div className="mt-8">
-        <FormularioLogin />
-      </div>
-
-      <p className="mt-auto py-8 text-center text-xs text-muted-foreground">
-        Esqueceu a senha? Peça para o dono redefinir no painel do Supabase.
-      </p>
-    </main>
+        <div className="mt-8 pb-10">
+          <FormularioLogin />
+        </div>
+      </main>
+    </div>
   );
 }

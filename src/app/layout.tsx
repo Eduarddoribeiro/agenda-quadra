@@ -12,10 +12,10 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Agenda da Quadra", template: "%s – Agenda da Quadra" },
-  description: "Horários livres e reservas da quadra de futsal.",
-  applicationName: "Agenda da Quadra",
-  appleWebApp: { capable: true, title: "Quadra", statusBarStyle: "default" },
+  title: { default: "Ginásio Krahe", template: "%s – Ginásio Krahe" },
+  description: "Agenda da quadra do Ginásio Krahe.",
+  applicationName: "Ginásio Krahe",
+  appleWebApp: { capable: true, title: "Krahe", statusBarStyle: "default" },
   formatDetection: { telephone: false },
 };
 

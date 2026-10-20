@@ -45,3 +45,6 @@ next-env.d.ts
 /.pglite
 
 .vercel
+
+# supabase cli
+/supabase/.temp
