@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sem internet – Agenda da Quadra</title>
+<style>
+  :root { --fundo:#e8ecf0; --tinta:#0f1b2d; --suave:#556275; --verde:#0b7a41; }
+  @media (prefers-color-scheme: dark) { :root { --fundo:#0d1626; --tinta:#e9eef5; --suave:#95a3b8; --verde:#3dd68c; } }
+  body { margin:0; min-height:100dvh; display:grid; place-items:center; background:var(--fundo); color:var(--tinta);
+         font-family: ui-sans-serif, system-ui, sans-serif; padding:24px; box-sizing:border-box; }
+  main { max-width:22rem; }
+  h1 { font-size:2rem; line-height:1.05; margin:0 0 .5rem; font-stretch:condensed; font-weight:800; }
+  p { color:var(--suave); margin:0 0 1.5rem; line-height:1.5; }
+  button { height:48px; padding:0 20px; border:0; border-radius:999px; background:var(--verde); color:#fff;
+           font:inherit; font-weight:700; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sem conexão com a internet</h1>
+  <p>Os horários só aparecem com internet, para nunca mostrar uma agenda desatualizada. Confira o Wi-Fi ou os dados móveis.</p>
+  <button onclick="location.reload()">Tentar de novo</button>
+</main>
+</body>
+</html>

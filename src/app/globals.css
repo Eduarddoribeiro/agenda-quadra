@@ -1,26 +1,145 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Segue o tema do celular: claro de dia, escuro à noite na quadra. */
+@custom-variant dark (@media (prefers-color-scheme: dark));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Cores do domínio: quadra livre, cartão amarelo (bloqueio), linha do "agora" */
+  --color-livre: var(--livre);
+  --color-livre-fundo: var(--livre-fundo);
+  --color-livre-tinta: var(--livre-tinta);
+  --color-amarelo: var(--amarelo);
+  --color-amarelo-fundo: var(--amarelo-fundo);
+  --color-amarelo-tinta: var(--amarelo-tinta);
+  --color-agora: var(--agora);
+  --color-whatsapp: var(--whatsapp);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* Concreto do ginásio + azul-noite */
+  --background: #e8ecf0;
+  --foreground: #0f1b2d;
+  --card: #ffffff;
+  --card-foreground: #0f1b2d;
+  --popover: #ffffff;
+  --popover-foreground: #0f1b2d;
+  --primary: #0f1b2d;
+  --primary-foreground: #ffffff;
+  --secondary: #dce2e8;
+  --secondary-foreground: #0f1b2d;
+  --muted: #dce2e8;
+  --muted-foreground: #556275;
+  --accent: #dce2e8;
+  --accent-foreground: #0f1b2d;
+  --destructive: #c8281f;
+  --border: #c9d1db;
+  --input: #b9c3cf;
+  --ring: #0b7a41;
+  --radius: 0.75rem;
+
+  --livre: #0b7a41;
+  --livre-fundo: #d9f1e3;
+  --livre-tinta: #06512b;
+  --amarelo: #f2c200;
+  --amarelo-fundo: #fff3c4;
+  --amarelo-tinta: #5c4700;
+  --agora: #e0531f;
+  --whatsapp: #128c4b;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0d1626;
+    --foreground: #e9eef5;
+    --card: #15213a;
+    --card-foreground: #e9eef5;
+    --popover: #15213a;
+    --popover-foreground: #e9eef5;
+    --primary: #e9eef5;
+    --primary-foreground: #0d1626;
+    --secondary: #1d2b47;
+    --secondary-foreground: #e9eef5;
+    --muted: #1d2b47;
+    --muted-foreground: #95a3b8;
+    --accent: #1d2b47;
+    --accent-foreground: #e9eef5;
+    --destructive: #f0605a;
+    --border: #26385a;
+    --input: #34496f;
+    --ring: #3dd68c;
+
+    --livre: #3dd68c;
+    --livre-fundo: #0f3222;
+    --livre-tinta: #b3f2cf;
+    --amarelo: #f2c200;
+    --amarelo-fundo: #3a3110;
+    --amarelo-tinta: #ffe58a;
+    --agora: #ff7a45;
+    --whatsapp: #3dd68c;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground;
+    overscroll-behavior-y: none;
+  }
+}
+
+@layer utilities {
+  /* Numerais de placar: Archivo no eixo de largura mais estreito. */
+  .font-placar {
+    font-variation-settings: "wdth" 62;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    line-height: 0.9;
+  }
+  .font-estreita {
+    font-variation-settings: "wdth" 80;
+  }
+  .pb-seguro {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-seguro {
+    padding-top: env(safe-area-inset-top);
+  }
 }
