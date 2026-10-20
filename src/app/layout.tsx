@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Archivo } from "next/font/google";
 import { RegistrarServiceWorker } from "@/components/registrar-sw";
 import { Toaster } from "@/components/ui/sonner";
+import { marca } from "@/lib/demo";
 import "./globals.css";
 
 // Uma família só: o eixo de largura (wdth) faz os numerais de placar e o texto corrido.
@@ -12,10 +13,10 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Ginásio Krahe", template: "%s – Ginásio Krahe" },
-  description: "Agenda da quadra do Ginásio Krahe.",
-  applicationName: "Ginásio Krahe",
-  appleWebApp: { capable: true, title: "Krahe", statusBarStyle: "default" },
+  title: { default: marca.nome, template: `%s – ${marca.nome}` },
+  description: marca.descricao,
+  applicationName: marca.nome,
+  appleWebApp: { capable: true, title: marca.nomeCurto, statusBarStyle: "default" },
   formatDetection: { telephone: false },
 };
 

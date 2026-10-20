@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
+import { marca } from "@/lib/demo";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Ginásio Krahe",
-    short_name: "Krahe",
-    description: "Agenda da quadra do Ginásio Krahe.",
+    name: marca.nome,
+    short_name: marca.nomeCurto,
+    description: marca.descricao,
     lang: "pt-BR",
     start_url: "/",
     scope: "/",

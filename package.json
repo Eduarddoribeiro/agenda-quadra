@@ -13,7 +13,9 @@
     "db:seed": "tsx src/db/seed.ts",
     "db:studio": "drizzle-kit studio",
     "db:local": "tsx scripts/db-local.ts",
-    "db:exemplo": "tsx scripts/dados-exemplo.ts"
+    "db:exemplo": "tsx scripts/dados-exemplo.ts",
+    "demo:preparar": "tsx scripts/demo.ts preparar",
+    "demo:resetar": "tsx scripts/demo.ts resetar"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

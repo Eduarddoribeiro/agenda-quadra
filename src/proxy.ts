@@ -50,7 +50,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Tudo, menos arquivos estáticos, ícones, manifest e service worker.
-    "/((?!_next/static|_next/image|manifest.webmanifest|sw.js|offline.html|icones/|icon|apple-icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    // Tudo, menos arquivos estáticos, ícones, manifest, service worker e o reset da demo (tem senha própria).
+    "/((?!api/demo/|_next/static|_next/image|manifest.webmanifest|sw.js|offline.html|icones/|icon|apple-icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

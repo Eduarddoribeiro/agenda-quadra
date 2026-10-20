@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { exigirUsuario } from "@/lib/auth";
 import { authDesativada } from "@/lib/auth-config";
 import { hojeSP } from "@/lib/datas";
+import { modoDemo } from "@/lib/demo";
 import { getQuadraPrincipal } from "@/modules/agenda/consultas";
 import { getBloqueiosFuturos, getHorarios } from "@/modules/configuracoes/consultas";
 import { Bloqueios } from "@/modules/configuracoes/componentes/bloqueios";
@@ -68,7 +69,9 @@ async function Conteudo() {
           )}
         </div>
         {authDesativada && (
-          <p className="mt-2 text-xs text-muted-foreground">Modo de desenvolvimento: login desativado.</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {modoDemo ? "Demonstração: entra sem login." : "Modo de desenvolvimento: login desativado."}
+          </p>
         )}
       </section>
     </div>
