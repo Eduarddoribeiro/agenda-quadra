@@ -43,3 +43,5 @@ next-env.d.ts
 
 # banco local de desenvolvimento
 /.pglite
+
+.vercel
