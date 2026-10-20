@@ -2,7 +2,8 @@ import { db } from "@/db";
 import { modoDemo, WHATSAPP_CONTATO } from "@/lib/demo";
 import { resetarDemo } from "@/modules/demo/dados";
 
-// Chamado toda madrugada pelo agendador (Vercel Cron manda "Authorization: Bearer $CRON_SECRET").
+// Reset forçado. O de hora em hora acontece sozinho no acesso (modules/demo/automatico.ts);
+// este é chamado uma vez por dia pelo Vercel Cron, que manda "Authorization: Bearer $CRON_SECRET".
 // Fora do modo demo a rota não existe.
 export async function GET(request: Request) {
   const autorizacao = request.headers.get("authorization");

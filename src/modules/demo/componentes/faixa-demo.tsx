@@ -10,7 +10,7 @@ export function FaixaDemo() {
       <span aria-hidden className="h-5 w-3.5 shrink-0 -rotate-12 rounded-[3px] bg-amarelo shadow-sm" />
       <p className="min-w-0 flex-1 text-xs leading-snug">
         <b className="block text-sm">Demonstração</b>
-        Mexa à vontade: os dados voltam ao exemplo toda madrugada.
+        Mexa à vontade: os dados voltam ao exemplo a cada hora.
       </p>
       <a
         href={linkWhatsApp(WHATSAPP_CONTATO, "Oi! Testei a demonstração do De Primeira e quero usar na minha quadra.")}

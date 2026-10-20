@@ -1,5 +1,5 @@
 // Modo demonstração: uma cópia separada do sistema (outro banco, outro deploy) com dados
-// fictícios que voltam ao exemplo toda madrugada. DESLIGA O LOGIN: nunca ligar no deploy
+// fictícios que voltam ao exemplo a cada hora (modules/demo/automatico.ts). DESLIGA O LOGIN: nunca ligar no deploy
 // do Krahe (o db/index.ts recusa subir em modo demo apontando para o Supabase).
 export const modoDemo = process.env.NEXT_PUBLIC_MODO_DEMO === "1";
 

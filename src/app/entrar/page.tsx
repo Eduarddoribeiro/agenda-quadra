@@ -44,7 +44,7 @@ function EntrarDemo() {
           De <span className="text-livre">Primeira</span>
         </h1>
         <p className="mt-4 text-center text-white/70">
-          Uma quadra de exemplo, com reservas de verdade para você mexer à vontade. Toda madrugada os dados voltam ao
+          Uma quadra de exemplo, com reservas de verdade para você mexer à vontade. A cada hora os dados voltam ao
           começo.
         </p>
 

@@ -3,7 +3,9 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { usuarios } from "@/db/schema";
+import { resetarDemoSeVencida } from "@/modules/demo/automatico";
 import { authDesativada } from "./auth-config";
+import { modoDemo } from "./demo";
 import { criarSupabaseServidor } from "./supabase/server";
 
 export type UsuarioAtual = {
@@ -18,7 +20,11 @@ export type UsuarioAtual = {
  * No primeiro login cria a linha em `usuarios`: o primeiro vira dono, os demais funcionários.
  */
 export async function exigirUsuario(): Promise<UsuarioAtual> {
-  if (authDesativada) return { id: null, nome: "Dono", papel: "dono" };
+  if (authDesativada) {
+    // Toda tela e ação da demo passa por aqui: bom ponto para o reset de hora em hora.
+    if (modoDemo) await resetarDemoSeVencida();
+    return { id: null, nome: "Dono", papel: "dono" };
+  }
 
   const supabase = await criarSupabaseServidor();
   const { data } = await supabase.auth.getClaims();

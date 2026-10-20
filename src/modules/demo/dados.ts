@@ -1,5 +1,6 @@
 // Dados fictícios da demonstração, sempre montados em volta do dia de hoje
 // para a agenda parecer viva. Sem "server-only": também roda pelo script (npm run demo).
+import { sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "@/db/schema";
 import { diaDaSemana, hojeSP, instanteSP, somarDias, type DataISO } from "@/lib/datas";
@@ -90,15 +91,35 @@ function chanceDeReserva(data: DataISO, hora: number, passado: boolean): number 
 
 const hh = (hora: number) => `${String(hora).padStart(2, "0")}:00`;
 
+/** Chave do advisory lock: dois resets ao mesmo tempo não se atropelam. */
+const TRAVA_RESET = 4_150_001;
+
 /**
  * Apaga tudo e recria a quadra de exemplo. `telefone` vai em todos os clientes:
  * assim o botão de WhatsApp da demo abre conversa com quem vende o sistema, nunca com um estranho.
+ * Com `somenteSeAntesDe`, só reseta se o último reset foi antes desse instante.
+ * Devolve se resetou (não reseta se outro reset estiver rodando).
  */
-export async function resetarDemo(db: Db, telefone: string) {
+export async function resetarDemo(
+  db: Db,
+  telefone: string,
+  opcoes: { somenteSeAntesDe?: Date } = {},
+): Promise<boolean> {
   const hoje = hojeSP();
   const sorteio = aleatorio(Number(hoje.replaceAll("-", "")));
 
-  await db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
+    const [{ livre }] = await tx.execute<{ livre: boolean }>(sql`select pg_try_advisory_xact_lock(${TRAVA_RESET}) as livre`);
+    if (!livre) return false;
+
+    if (opcoes.somenteSeAntesDe) {
+      // Os clientes de exemplo nascem no reset: o mais antigo marca quando foi o último.
+      const [{ desde }] = await tx.execute<{ desde: string | Date | null }>(
+        sql`select min(${clientes.createdAt}) as desde from ${clientes}`,
+      );
+      if (desde && new Date(desde) >= opcoes.somenteSeAntesDe) return false;
+    }
+
     await tx.delete(reservas);
     await tx.delete(reservasFixas);
     await tx.delete(bloqueios);
@@ -189,5 +210,6 @@ export async function resetarDemo(db: Db, telefone: string) {
     for (let i = 0; i < novasReservas.length; i += 200) {
       await tx.insert(reservas).values(novasReservas.slice(i, i + 200));
     }
+    return true;
   });
 }
