@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { db } from "@/db";
-import { clientes } from "@/db/schema";
+import { clientes, reservas, reservasFixas } from "@/db/schema";
 import { exigirUsuario } from "@/lib/auth";
 import { falha, sucesso, type Resultado } from "@/lib/resultado";
 import { normalizarTelefone, telefoneValido } from "@/lib/telefone";
@@ -43,6 +43,21 @@ export async function atualizarCliente(id: string, dados: DadosCliente): Promise
   const valores = validar(dados);
   if ("ok" in valores) return valores;
   await db.update(clientes).set(valores).where(eq(clientes.id, id));
+  refresh();
+  return sucesso();
+}
+
+/**
+ * Apaga o cliente junto com as reservas e horários fixos dele (ex.: cadastro duplicado).
+ * Não tem volta: a tela confirma antes, mostrando quantos jogos somem.
+ */
+export async function excluirCliente(id: string): Promise<Resultado> {
+  await exigirUsuario();
+  await db.transaction(async (tx) => {
+    await tx.delete(reservas).where(eq(reservas.clienteId, id));
+    await tx.delete(reservasFixas).where(eq(reservasFixas.clienteId, id));
+    await tx.delete(clientes).where(eq(clientes.id, id));
+  });
   refresh();
   return sucesso();
 }

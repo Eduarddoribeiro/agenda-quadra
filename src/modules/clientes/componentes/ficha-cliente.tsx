@@ -195,7 +195,12 @@ export function FichaCliente({
         Cliente desde {formatarSP(cliente.createdAt, "MMMM 'de' yyyy")}
       </p>
 
-      <DrawerCliente aberto={editando} onFechar={() => setEditando(false)} cliente={cliente} />
+      <DrawerCliente
+        aberto={editando}
+        onFechar={() => setEditando(false)}
+        cliente={cliente}
+        vinculos={{ jogos: historico.length, fixos: fixos.length }}
+      />
     </div>
   );
 }
