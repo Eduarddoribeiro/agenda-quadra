@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { textoHorariosLivres } from "../compartilhar";
 import type { AgendaDia } from "../consultas";
-import { slotsLivresFuturos, type Slot } from "../slots";
+import { linhasDoDia, slotsLivresFuturos, type Slot } from "../slots";
 import { BotaoCompartilhar } from "./botao-compartilhar";
 import { DrawerReserva } from "./drawer-reserva";
 import { DrawerReservar } from "./drawer-reservar";
@@ -32,7 +32,8 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
   const [slotAberto, setSlotAberto] = useState<Slot | null>(null);
 
   const livres = useMemo(() => slotsLivresFuturos(slots), [slots]);
-  const reservados = slots.filter((s) => s.estado === "reservado").length;
+  const linhas = useMemo(() => linhasDoDia(slots), [slots]);
+  const reservados = linhas.filter((s) => s.estado === "reservado").length;
   const texto = useMemo(() => textoHorariosLivres([{ data, slots }]), [data, slots]);
 
   function irPara(destino: DataISO) {
@@ -164,7 +165,7 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
             </div>
 
             <ol className="space-y-2.5">
-              {slots.map((slot) => (
+              {linhas.map((slot) => (
                 <LinhaSlot key={slot.minuto} slot={slot} onReservar={setSlotReservar} onAbrirReserva={setSlotAberto} />
               ))}
             </ol>
@@ -185,7 +186,7 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
         )}
       </section>
 
-      <DrawerReservar data={data} slot={slotReservar} onFechar={() => setSlotReservar(null)} />
+      <DrawerReservar dia={dia} slot={slotReservar} onFechar={() => setSlotReservar(null)} />
       <DrawerReserva
         data={data}
         slot={slotAberto}

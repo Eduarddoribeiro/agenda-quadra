@@ -1,38 +1,56 @@
 "use client";
 
-import { Check, Loader2, Repeat, Search, UserPlus, X } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { Check, Clock, Loader2, Repeat, Search, UserPlus, X } from "lucide-react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { diaDaSemana, formatarData, nomeDoDia, rotuloHorario, type DataISO } from "@/lib/datas";
+import { diaDaSemana, formatarData, minutosDoHorario, nomeDoDia, rotuloHorario } from "@/lib/datas";
 import { formatarTelefone } from "@/lib/telefone";
 import { cn } from "@/lib/utils";
 import { pesquisarClientes } from "@/modules/clientes/acoes";
 import type { ClienteResumo } from "@/modules/clientes/consultas";
+import { chaveDoNome } from "@/modules/clientes/nomes";
 import { criarReserva } from "../acoes";
+import type { AgendaDia } from "../consultas";
 import { rotuloFixo } from "../recorrencia";
-import type { Slot } from "../slots";
+import { conflitoNoIntervalo, DURACAO_SLOT, instanteDoMinuto, type Slot } from "../slots";
 
 type Props = {
-  data: DataISO;
+  dia: AgendaDia;
   slot: Slot | null;
   onFechar: () => void;
 };
 
-export function DrawerReservar({ data, slot, onFechar }: Props) {
+export function DrawerReservar({ dia, slot, onFechar }: Props) {
   return (
     <Drawer open={slot !== null} onOpenChange={(aberto) => !aberto && onFechar()}>
       <DrawerContent className="pb-seguro">
         {/* A key zera o formulário a cada slot aberto */}
-        {slot && <FormularioReserva key={slot.inicio.toISOString()} data={data} slot={slot} onFechar={onFechar} />}
+        {slot && <FormularioReserva key={slot.inicio.toISOString()} dia={dia} slot={slot} onFechar={onFechar} />}
       </DrawerContent>
     </Drawer>
   );
 }
 
-function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot; onFechar: () => void }) {
+/** Período de funcionamento que contém o slot, em minutos do dia. */
+function periodoDoSlot(dia: AgendaDia, slot: Slot): { abertura: number; fechamento: number } {
+  const periodo = dia.periodos
+    .map((p) => ({ abertura: minutosDoHorario(p.abertura), fechamento: minutosDoHorario(p.fechamento) }))
+    .find((p) => p.abertura <= slot.minuto && slot.minuto < p.fechamento);
+  return periodo ?? { abertura: slot.minuto, fechamento: slot.minuto + DURACAO_SLOT };
+}
+
+/** De 30 em 30 minutos, de `de` até `ate` (inclusive). */
+function passos(de: number, ate: number): number[] {
+  const lista: number[] = [];
+  for (let m = de; m <= ate; m += 30) lista.push(m);
+  return lista;
+}
+
+function FormularioReserva({ dia, slot, onFechar }: { dia: AgendaDia; slot: Slot; onFechar: () => void }) {
+  const data = dia.data;
   const [termo, setTermo] = useState("");
   const [resultados, setResultados] = useState<ClienteResumo[] | null>(null);
   const [selecionado, setSelecionado] = useState<ClienteResumo | null>(null);
@@ -41,7 +59,20 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
   const [novoTelefone, setNovoTelefone] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [repetir, setRepetir] = useState(false);
-  const fixo = rotuloFixo(diaDaSemana(data), slot.minuto);
+  // Horário diferente da 1h do slot (ex.: vôlei das 14h30 às 16h).
+  const [mudandoHorario, setMudandoHorario] = useState(false);
+  const [inicio, setInicio] = useState(slot.minuto);
+  const [fim, setFim] = useState(slot.minuto + DURACAO_SLOT);
+  const periodo = periodoDoSlot(dia, slot);
+  const personalizado = inicio !== slot.minuto || fim !== slot.minuto + DURACAO_SLOT;
+  const conflito = useMemo(
+    () =>
+      personalizado
+        ? conflitoNoIntervalo(dia.slots, { inicio: instanteDoMinuto(data, inicio), fim: instanteDoMinuto(data, fim) })
+        : undefined,
+    [personalizado, dia.slots, data, inicio, fim],
+  );
+  const fixo = rotuloFixo(diaDaSemana(data), inicio);
   const [buscando, startBusca] = useTransition();
   const [salvando, startSalvar] = useTransition();
 
@@ -54,7 +85,15 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
     return () => clearTimeout(id);
   }, [termo, selecionado, cadastrando]);
 
-  const podeConfirmar = selecionado !== null || (cadastrando && novoNome.trim().length >= 2);
+  const podeConfirmar = !conflito && (selecionado !== null || (cadastrando && novoNome.trim().length >= 2));
+  // Já tem cliente com esse nome: escolher ele em vez de cadastrar de novo.
+  const mesmoNome = termo.trim() ? resultados?.find((c) => chaveDoNome(c.nome) === chaveDoNome(termo)) : undefined;
+
+  function mudarInicio(novo: number) {
+    // Mantém a duração escolhida ao mudar o começo, sem passar do fechamento.
+    setFim(Math.min(novo + (fim - inicio), periodo.fechamento));
+    setInicio(novo);
+  }
 
   function comecarCadastro() {
     const soDigitos = termo.replace(/\D/g, "");
@@ -72,7 +111,8 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
     startSalvar(async () => {
       const resultado = await criarReserva({
         data,
-        minuto: slot.minuto,
+        minuto: inicio,
+        fim: personalizado ? fim : undefined,
         clienteId: selecionado?.id,
         novoCliente: cadastrando ? { nome: novoNome, telefone: novoTelefone } : undefined,
         observacoes,
@@ -85,7 +125,7 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
       const nome = selecionado?.nome ?? novoNome.trim();
       const { semanas, puladas } = resultado.dados;
       if (!repetir) {
-        toast.success(`Reservado: ${nome}, ${rotuloHorario(slot.minuto)}`);
+        toast.success(`Reservado: ${nome}, ${rotuloHorario(inicio)}`);
       } else if (puladas.length) {
         // Avisa sem esconder: essas semanas o horário já tinha dono ou estava bloqueado.
         toast.warning(`${nome}: fixo ${fixo}`, {
@@ -104,12 +144,68 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
   return (
     <div className="flex max-h-full min-h-0 flex-col">
       <header className="px-5 pt-5 pb-3">
-        <DrawerTitle className="font-placar text-[2rem] leading-none">
-          {rotuloHorario(slot.minuto)} às {rotuloHorario(slot.minuto + 60)}
-        </DrawerTitle>
-        <DrawerDescription className="mt-1 text-sm">
-          {nomeDoDia(data)}, {formatarData(data, "d 'de' MMMM")}
-        </DrawerDescription>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <DrawerTitle className="font-placar text-[2rem] leading-none">
+              {rotuloHorario(inicio)} às {rotuloHorario(fim)}
+            </DrawerTitle>
+            <DrawerDescription className="mt-1 text-sm">
+              {nomeDoDia(data)}, {formatarData(data, "d 'de' MMMM")}
+            </DrawerDescription>
+          </div>
+          {!mudandoHorario && (
+            <button
+              type="button"
+              onClick={() => setMudandoHorario(true)}
+              className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/60"
+            >
+              <Clock className="size-4" aria-hidden />
+              Mudar horário
+            </button>
+          )}
+        </div>
+
+        {mudandoHorario && (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="reserva-inicio">Começa</Label>
+              <select
+                id="reserva-inicio"
+                value={inicio}
+                onChange={(e) => mudarInicio(Number(e.target.value))}
+                className="h-11 w-full rounded-lg border bg-card px-3 text-base font-semibold"
+              >
+                {passos(periodo.abertura, periodo.fechamento - 30).map((m) => (
+                  <option key={m} value={m}>
+                    {rotuloHorario(m)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="reserva-fim">Termina</Label>
+              <select
+                id="reserva-fim"
+                value={fim}
+                onChange={(e) => setFim(Number(e.target.value))}
+                className="h-11 w-full rounded-lg border bg-card px-3 text-base font-semibold"
+              >
+                {passos(inicio + 30, periodo.fechamento).map((m) => (
+                  <option key={m} value={m}>
+                    {rotuloHorario(m)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {conflito && (
+              <p role="alert" className="col-span-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
+                {conflito.estado === "bloqueado"
+                  ? `Choca com o bloqueio: ${conflito.bloqueio?.motivo}.`
+                  : `Choca com ${conflito.reserva?.clienteNome}, que já tem parte desse horário.`}
+              </p>
+            )}
+          </div>
+        )}
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-3">
@@ -194,7 +290,14 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
                     className="flex min-h-14 w-full items-center justify-between gap-3 py-2 text-left outline-none focus-visible:bg-muted active:bg-muted"
                   >
                     <span className="min-w-0">
-                      <span className="block truncate font-semibold">{c.nome}</span>
+                      <span className="block truncate font-semibold">
+                        {c.nome}
+                        {c.id === mesmoNome?.id && (
+                          <span className="ml-2 rounded-full bg-livre-fundo px-2 py-0.5 text-[11px] font-bold text-livre-tinta">
+                            Já cadastrado
+                          </span>
+                        )}
+                      </span>
                       <span className="block text-xs text-muted-foreground">
                         {formatarTelefone(c.telefone) || "Sem telefone"}
                       </span>
@@ -209,14 +312,25 @@ function FormularioReserva({ data, slot, onFechar }: { data: DataISO; slot: Slot
               ))}
             </ul>
 
-            <button
-              type="button"
-              onClick={comecarCadastro}
-              className="mt-2 flex min-h-14 w-full items-center gap-3 rounded-xl border-2 border-dashed px-4 text-left font-semibold outline-none focus-visible:border-ring"
-            >
-              <UserPlus className="size-5 shrink-0" aria-hidden />
-              <span className="truncate">{termo.trim() ? `Cadastrar “${termo.trim()}”` : "Cadastrar cliente novo"}</span>
-            </button>
+            {mesmoNome ? (
+              // O certo é tocar no cliente acima; cadastrar de novo só se for outra pessoa com o mesmo nome.
+              <button
+                type="button"
+                onClick={comecarCadastro}
+                className="mt-2 h-11 w-full rounded-full text-sm font-semibold text-muted-foreground"
+              >
+                É outra pessoa com esse nome? Cadastrar
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={comecarCadastro}
+                className="mt-2 flex min-h-14 w-full items-center gap-3 rounded-xl border-2 border-dashed px-4 text-left font-semibold outline-none focus-visible:border-ring"
+              >
+                <UserPlus className="size-5 shrink-0" aria-hidden />
+                <span className="truncate">{termo.trim() ? `Cadastrar “${termo.trim()}”` : "Cadastrar cliente novo"}</span>
+              </button>
+            )}
           </div>
         )}
 

@@ -3,7 +3,7 @@
 import { Plus, Repeat } from "lucide-react";
 import { IconeWhatsApp } from "@/components/icone-whatsapp";
 import { NumeralHorario } from "@/components/numeral-horario";
-import { rotuloHorario } from "@/lib/datas";
+import { minutoSP, rotuloHorario } from "@/lib/datas";
 import { cn } from "@/lib/utils";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
 import type { Slot } from "../slots";
@@ -18,7 +18,8 @@ function Hora({ slot }: { slot: Slot }) {
   return (
     <div className="pt-2">
       <NumeralHorario
-        minuto={slot.minuto}
+        // Jogo fora da grade (ex.: 14h30 numa grade de horas cheias) mostra o horário dele.
+        minuto={slot.reserva ? minutoSP(slot.reserva.inicio) : slot.minuto}
         className={cn(
           "text-[2.75rem]",
           slot.agora ? "text-agora" : slot.passado ? "text-muted-foreground/60" : "text-foreground",
@@ -30,6 +31,12 @@ function Hora({ slot }: { slot: Slot }) {
 
 export function LinhaSlot({ slot, onReservar, onAbrirReserva }: Props) {
   const fimHora = rotuloHorario(slot.minuto + 60);
+  const r = slot.reserva;
+  // Só aparece quando o jogo não é a 1h do slot (ex.: "14h30 às 16h").
+  const horarioDiferente =
+    r && (r.inicio.getTime() !== slot.inicio.getTime() || r.fim.getTime() !== slot.fim.getTime())
+      ? `${rotuloHorario(minutoSP(r.inicio))} às ${rotuloHorario(minutoSP(r.fim) || 1440)}`
+      : null;
 
   return (
     <li className="relative grid grid-cols-[4.25rem_1fr] gap-2">
@@ -83,6 +90,7 @@ export function LinhaSlot({ slot, onReservar, onAbrirReserva }: Props) {
               <span className="truncate text-base font-bold">{slot.reserva.clienteNome}</span>
             </span>
             <span className="block truncate text-xs text-muted-foreground">
+              {horarioDiferente && <strong className="font-semibold text-foreground">{horarioDiferente} · </strong>}
               {slot.reserva.observacoes || formatarTelefone(slot.reserva.clienteTelefone) || "Sem telefone"}
             </span>
           </button>

@@ -2,6 +2,8 @@ import "server-only";
 import { asc, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { clientes, reservas } from "@/db/schema";
+import { chaveDoNome } from "./nomes";
+import { chaveDoNomeSql } from "./repetidos";
 
 export type ClienteResumo = {
   id: string;
@@ -36,7 +38,8 @@ export async function buscarClientes(
 
   const filtro = busca
     ? or(
-        ilike(clientes.nome, `%${busca}%`),
+        // Sem acento e sem diferenciar maiúscula: "volei" acha "Escola de Vôlei".
+        ilike(chaveDoNomeSql(clientes.nome), `%${chaveDoNome(busca)}%`),
         digitos.length >= 3 ? ilike(clientes.telefone, `%${digitos}%`) : undefined,
       )
     : undefined;

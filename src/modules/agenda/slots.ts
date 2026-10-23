@@ -44,7 +44,7 @@ export function sobrepoe(a: Intervalo, b: Intervalo): boolean {
 }
 
 /** Instante de um minuto do dia, aceitando valores ≥ 24h (dia seguinte). */
-function instanteDoMinuto(data: DataISO, minuto: number): Date {
+export function instanteDoMinuto(data: DataISO, minuto: number): Date {
   const dia = somarDias(data, Math.floor(minuto / 1440));
   const m = minuto % 1440;
   return instanteSP(dia, `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
@@ -99,4 +99,17 @@ export function calcularSlots(params: {
 
 export function slotsLivresFuturos(slots: Slot[]): Slot[] {
   return slots.filter((s) => s.estado === "livre" && !s.passado);
+}
+
+/**
+ * Linhas da tela do dia: um jogo mais longo que 1h ou fora da grade (ex.: vôlei das
+ * 14h30 às 16h) ocupa vários slots, mas aparece uma vez só.
+ */
+export function linhasDoDia(slots: Slot[]): Slot[] {
+  return slots.filter((s, i) => !s.reserva || slots[i - 1]?.reserva?.id !== s.reserva.id);
+}
+
+/** Primeiro slot ocupado (reserva ou bloqueio) que choca com o intervalo. */
+export function conflitoNoIntervalo(slots: Slot[], intervalo: Intervalo): Slot | undefined {
+  return slots.find((s) => s.estado !== "livre" && sobrepoe(s.reserva ?? s.bloqueio ?? s, intervalo));
 }

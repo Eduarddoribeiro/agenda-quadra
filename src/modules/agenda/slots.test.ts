@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { rotuloHorario } from "@/lib/datas";
-import { calcularSlots, slotsLivresFuturos, type BloqueioNoSlot, type ReservaNoSlot } from "./slots";
+import { calcularSlots, conflitoNoIntervalo, linhasDoDia, slotsLivresFuturos, type BloqueioNoSlot, type ReservaNoSlot } from "./slots";
 
 const DATA = "2026-10-20"; // terça
 const MADRUGADA = new Date("2026-10-20T03:00:00Z"); // 00:00 em São Paulo
@@ -144,5 +144,29 @@ describe("calcularSlots", () => {
       [false, false],
     ]);
     expect(slotsLivresFuturos(slots).map((s) => s.minuto / 60)).toEqual([19, 20]);
+  });
+});
+
+describe("jogo fora da grade (vôlei das 14h30 às 16h)", () => {
+  const params = {
+    data: DATA,
+    periodos: [{ abertura: "13:00:00", fechamento: "18:00:00" }],
+    reservas: [reserva("2026-10-20T14:30:00-03:00", "2026-10-20T16:00:00-03:00")],
+    bloqueios: [],
+    agora: MADRUGADA,
+  };
+
+  it("ocupa os slots das 14h e das 15h, mas aparece numa linha só", () => {
+    const slots = calcularSlots(params);
+    expect(slots.map((s) => s.estado)).toEqual(["livre", "reservado", "reservado", "livre", "livre"]);
+    expect(linhasDoDia(slots).map((s) => rotuloHorario(s.minuto))).toEqual(["13h", "14h", "16h", "17h"]);
+  });
+
+  it("acusa conflito com quem já tem parte do horário", () => {
+    const slots = calcularSlots(params);
+    const das = (inicio: string, fim: string) => ({ inicio: new Date(inicio), fim: new Date(fim) });
+    expect(conflitoNoIntervalo(slots, das("2026-10-20T13:00:00-03:00", "2026-10-20T14:30:00-03:00"))).toBeUndefined();
+    expect(conflitoNoIntervalo(slots, das("2026-10-20T13:30:00-03:00", "2026-10-20T15:00:00-03:00"))?.reserva?.clienteNome).toBe("Ana");
+    expect(conflitoNoIntervalo(slots, das("2026-10-20T16:00:00-03:00", "2026-10-20T17:30:00-03:00"))).toBeUndefined();
   });
 });

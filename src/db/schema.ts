@@ -66,6 +66,8 @@ export const reservasFixas = pgTable(
     diaSemana: smallint("dia_semana").notNull(),
     // Hora de parede em America/Sao_Paulo
     horario: time("horario").notNull(),
+    // Duração de cada jogo, em minutos (a maioria é 1h; ex.: vôlei das 14h30 às 16h = 90)
+    duracao: smallint("duracao").notNull().default(60),
     // Primeiro dia e, se encerrado, último dia (datas de calendário em São Paulo)
     inicioVigencia: date("inicio_vigencia").notNull(),
     fimVigencia: date("fim_vigencia"),
@@ -77,6 +79,7 @@ export const reservasFixas = pgTable(
   },
   (t) => [
     check("reservas_fixas_dia_semana_valido", sql`${t.diaSemana} between 0 and 6`),
+    check("reservas_fixas_duracao_valida", sql`${t.duracao} between 30 and 720`),
     index("reservas_fixas_cliente_idx").on(t.clienteId),
   ],
 );

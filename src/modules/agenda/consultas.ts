@@ -5,7 +5,7 @@ import { bloqueios, clientes, horariosFuncionamento, quadras, reservas } from "@
 import { diaDaSemana, hojeSP, instanteSP, somarDias, type DataISO } from "@/lib/datas";
 import { garantirReservasFixas } from "./fixas";
 import { SEMANAS_INICIAIS } from "./recorrencia";
-import { calcularSlots, type BloqueioNoSlot, type ReservaNoSlot, type Slot } from "./slots";
+import { calcularSlots, type BloqueioNoSlot, type Periodo, type ReservaNoSlot, type Slot } from "./slots";
 
 export async function getQuadraPrincipal() {
   const quadra = await db.query.quadras.findFirst({
@@ -48,7 +48,7 @@ async function buscarOcupacao(quadraId: string, de: Date, ate: Date) {
   return { reservas: listaReservas satisfies ReservaNoSlot[], bloqueios: listaBloqueios satisfies BloqueioNoSlot[] };
 }
 
-export type AgendaDia = { data: DataISO; aberto: boolean; slots: Slot[] };
+export type AgendaDia = { data: DataISO; aberto: boolean; periodos: Periodo[]; slots: Slot[] };
 
 /** Slots de vários dias seguidos, com uma consulta só ao banco. */
 export async function getAgenda(dataInicial: DataISO, dias: number, agora = new Date()): Promise<AgendaDia[]> {
@@ -73,6 +73,7 @@ export async function getAgenda(dataInicial: DataISO, dias: number, agora = new 
     return {
       data,
       aberto: periodos.length > 0,
+      periodos: periodos.map(({ abertura, fechamento }) => ({ abertura, fechamento })),
       slots: calcularSlots({ data, periodos, ...ocupacao, agora }),
     };
   });

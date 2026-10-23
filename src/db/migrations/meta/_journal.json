@@ -29,6 +29,13 @@
       "when": 1792526295028,
       "tag": "0003_reservas_fixas",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792767893162,
+      "tag": "0004_duracao_dos_fixos",
+      "breakpoints": true
     }
   ]
 }

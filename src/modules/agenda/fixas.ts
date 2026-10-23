@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { bloqueios, reservas, reservasFixas } from "@/db/schema";
 import { instanteSP, somarDias, type DataISO } from "@/lib/datas";
 import { datasDoFixo } from "./recorrencia";
-import { DURACAO_SLOT, sobrepoe } from "./slots";
+import { sobrepoe } from "./slots";
 
 type Transacao = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -27,7 +27,7 @@ export async function gerarReservasDoFixo(
     const horario = fixa.horario.slice(0, 5);
     const jogos = datas.map((data) => {
       const inicio = instanteSP(data, horario);
-      return { data, inicio, fim: new Date(inicio.getTime() + DURACAO_SLOT * 60_000) };
+      return { data, inicio, fim: new Date(inicio.getTime() + fixa.duracao * 60_000) };
     });
 
     const bloqueiosNoPeriodo = await tx

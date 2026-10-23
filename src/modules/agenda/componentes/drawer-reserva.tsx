@@ -9,7 +9,7 @@ import { NumeralHorario } from "@/components/numeral-horario";
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { diaDaSemana, formatarData, nomeDoDia, rotuloHorario, type DataISO } from "@/lib/datas";
+import { diaDaSemana, formatarData, minutoSP, nomeDoDia, rotuloHorario, type DataISO } from "@/lib/datas";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
 import { cn } from "@/lib/utils";
 import { cancelarReserva, editarReserva, encerrarFixa, moverReserva, reativarReserva } from "../acoes";
@@ -45,8 +45,11 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
   const [pendente, startTransition] = useTransition();
 
   const dataLegivel = `${nomeDoDia(data)}, ${formatarData(data, "dd/MM")}`;
-  const fixo = rotuloFixo(diaDaSemana(data), slot.minuto);
-  const mensagem = `Olá, ${reserva.clienteNome.split(" ")[0]}! Confirmando sua reserva na quadra: ${dataLegivel.toLowerCase()}, das ${rotuloHorario(slot.minuto)} às ${rotuloHorario(slot.minuto + 60)}.`;
+  // Horário do jogo, que pode não ser a 1h do slot (ex.: vôlei das 14h30 às 16h).
+  const inicio = minutoSP(reserva.inicio);
+  const fim = minutoSP(reserva.fim) || 1440;
+  const fixo = rotuloFixo(diaDaSemana(data), inicio);
+  const mensagem = `Olá, ${reserva.clienteNome.split(" ")[0]}! Confirmando sua reserva na quadra: ${dataLegivel.toLowerCase()}, das ${rotuloHorario(inicio)} às ${rotuloHorario(fim)}.`;
   const obsAlterada = observacoes.trim() !== (reserva.observacoes ?? "");
 
   function salvarObservacoes() {
@@ -83,7 +86,7 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
       const r = await cancelarReserva(reserva.id);
       if (!r.ok) return void toast.error(r.erro);
       onFechar();
-      toast(`Reserva das ${rotuloHorario(slot.minuto)} cancelada`, {
+      toast(`Reserva das ${rotuloHorario(inicio)} cancelada`, {
         description: `${reserva.clienteNome}, ${dataLegivel.toLowerCase()}`,
         duration: 8000,
         action: {
@@ -104,7 +107,7 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
         <div className="min-w-0 flex-1">
           <DrawerTitle className="truncate text-2xl font-extrabold">{reserva.clienteNome}</DrawerTitle>
           <DrawerDescription className="mt-0.5 text-sm">
-            {dataLegivel}, {rotuloHorario(slot.minuto)} às {rotuloHorario(slot.minuto + 60)}
+            {dataLegivel}, {rotuloHorario(inicio)} às {rotuloHorario(fim)}
           </DrawerDescription>
           {reserva.fixaId && (
             <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
@@ -113,7 +116,7 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
             </p>
           )}
         </div>
-        <NumeralHorario minuto={slot.minuto} className="shrink-0 text-5xl" />
+        <NumeralHorario minuto={inicio} className="shrink-0 text-5xl" />
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
@@ -258,7 +261,7 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
             ) : (
               <>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  O horário das {rotuloHorario(slot.minuto)} volta a ficar livre.
+                  O horário das {rotuloHorario(inicio)} volta a ficar livre.
                 </p>
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <button

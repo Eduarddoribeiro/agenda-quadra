@@ -3,19 +3,26 @@
 import { and, eq, gte } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { db } from "@/db";
-import { clientes, reservas, reservasFixas } from "@/db/schema";
+import { reservas, reservasFixas } from "@/db/schema";
 import { exigirUsuario } from "@/lib/auth";
-import { dataSP, diaDaSemana, ehDataISO, formatarSP, somarDias, type DataISO } from "@/lib/datas";
+import { dataSP, diaDaSemana, ehDataISO, formatarSP, minutosDoHorario, somarDias, type DataISO } from "@/lib/datas";
 import { codigoPg, falha, sucesso, type Resultado } from "@/lib/resultado";
 import { normalizarTelefone, telefoneValido } from "@/lib/telefone";
 import { getAgendaDia, getQuadraPrincipal } from "./consultas";
 import { gerarReservasDoFixo } from "./fixas";
+import { clienteExistenteOuNovo } from "@/modules/clientes/repetidos";
 import { SEMANAS_INICIAIS } from "./recorrencia";
+import { conflitoNoIntervalo, instanteDoMinuto, type Intervalo } from "./slots";
 
 export type NovaReserva = {
   data: DataISO;
   /** Minutos desde 00:00 do dia (ex.: 1110 = 18h30) */
   minuto: number;
+  /**
+   * Fim em minutos, quando não é o jogo de 1h do slot (ex.: vôlei das 14h30 às 16h:
+   * minuto 870, fim 960). Precisa caber num período de funcionamento.
+   */
+  fim?: number;
   clienteId?: string;
   novoCliente?: { nome: string; telefone: string };
   observacoes?: string;
@@ -32,12 +39,23 @@ export async function criarReserva(
 
   if (!ehDataISO(entrada.data) || !Number.isInteger(entrada.minuto)) return falha("Horário inválido.");
 
-  // Confere no servidor que o slot existe e está livre (funcionamento, bloqueios e reservas).
+  // Confere no servidor que o horário existe e está livre (funcionamento, bloqueios e reservas).
   const dia = await getAgendaDia(entrada.data);
-  const slot = dia.slots.find((s) => s.minuto === entrada.minuto);
-  if (!slot) return falha("A quadra não funciona nesse horário.");
-  if (slot.estado === "bloqueado") return falha(`Horário bloqueado: ${slot.bloqueio?.motivo}.`);
-  if (slot.estado === "reservado") return falha(MSG_OCUPADO);
+  let horario: Intervalo;
+  if (entrada.fim === undefined) {
+    const slot = dia.slots.find((s) => s.minuto === entrada.minuto);
+    if (!slot) return falha("A quadra não funciona nesse horário.");
+    horario = slot;
+  } else {
+    const { minuto, fim } = entrada;
+    if (!Number.isInteger(fim) || minuto % 30 || fim % 30 || fim <= minuto) return falha("Horário inválido.");
+    const cabe = dia.periodos.some((p) => minutosDoHorario(p.abertura) <= minuto && fim <= minutosDoHorario(p.fechamento));
+    if (!cabe) return falha("A quadra não funciona em todo esse horário.");
+    horario = { inicio: instanteDoMinuto(entrada.data, minuto), fim: instanteDoMinuto(entrada.data, fim) };
+  }
+  const conflito = conflitoNoIntervalo(dia.slots, horario);
+  if (conflito?.estado === "bloqueado") return falha(`Horário bloqueado: ${conflito.bloqueio?.motivo}.`);
+  if (conflito) return falha(MSG_OCUPADO);
 
   let novoCliente: { nome: string; telefone: string | null } | undefined;
   if (!entrada.clienteId) {
@@ -52,11 +70,9 @@ export async function criarReserva(
 
   try {
     const criada = await db.transaction(async (tx) => {
+      // Nome que já existe vira o mesmo cliente, para a lista não encher de repetidos.
       let clienteId = entrada.clienteId;
-      if (!clienteId && novoCliente) {
-        const [cliente] = await tx.insert(clientes).values(novoCliente).returning({ id: clientes.id });
-        clienteId = cliente.id;
-      }
+      if (!clienteId && novoCliente) clienteId = (await clienteExistenteOuNovo(tx, novoCliente)).id;
       const observacoes = entrada.observacoes?.trim() || null;
 
       if (entrada.repetirSemanal) {
@@ -66,7 +82,8 @@ export async function criarReserva(
             quadraId: quadra.id,
             clienteId: clienteId!,
             diaSemana: diaDaSemana(entrada.data),
-            horario: formatarSP(slot.inicio, "HH:mm"),
+            horario: formatarSP(horario.inicio, "HH:mm"),
+            duracao: (horario.fim.getTime() - horario.inicio.getTime()) / 60_000,
             inicioVigencia: entrada.data,
             geradaAte: somarDias(entrada.data, -1),
             observacoes,
@@ -86,8 +103,8 @@ export async function criarReserva(
         .values({
           quadraId: quadra.id,
           clienteId: clienteId!,
-          inicio: slot.inicio,
-          fim: slot.fim,
+          inicio: horario.inicio,
+          fim: horario.fim,
           observacoes,
           criadoPor: usuario.id,
         })
@@ -182,11 +199,18 @@ export async function moverReserva(reservaId: string, data: DataISO, minuto: num
   const dia = await getAgendaDia(data);
   const slot = dia.slots.find((s) => s.minuto === minuto);
   if (!slot) return falha("A quadra não funciona nesse horário.");
-  if (slot.estado === "bloqueado") return falha(`Horário bloqueado: ${slot.bloqueio?.motivo}.`);
-  if (slot.estado === "reservado" && slot.reserva?.id !== reservaId) return falha(MSG_OCUPADO);
+
+  // Mantém a duração do jogo (um de 1h30 continua 1h30 no horário novo).
+  const atual = await db.query.reservas.findFirst({ where: eq(reservas.id, reservaId) });
+  if (!atual) return falha("Reserva não encontrada.");
+  const fim = new Date(slot.inicio.getTime() + (atual.fim.getTime() - atual.inicio.getTime()));
+  const outros = dia.slots.filter((s) => s.reserva?.id !== reservaId);
+  const conflito = conflitoNoIntervalo(outros, { inicio: slot.inicio, fim });
+  if (conflito?.estado === "bloqueado") return falha(`Horário bloqueado: ${conflito.bloqueio?.motivo}.`);
+  if (conflito) return falha(MSG_OCUPADO);
 
   try {
-    await db.update(reservas).set({ inicio: slot.inicio, fim: slot.fim }).where(eq(reservas.id, reservaId));
+    await db.update(reservas).set({ inicio: slot.inicio, fim }).where(eq(reservas.id, reservaId));
   } catch (erro) {
     if (codigoPg(erro) === "23P01") return falha(MSG_OCUPADO);
     throw erro;

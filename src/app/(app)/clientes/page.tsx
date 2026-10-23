@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { exigirUsuario } from "@/lib/auth";
 import { buscarClientes } from "@/modules/clientes/consultas";
 import { ListaClientes } from "@/modules/clientes/componentes/lista-clientes";
+import { getClientesRepetidos } from "@/modules/clientes/repetidos";
 
 export const metadata: Metadata = { title: "Clientes" };
 
@@ -19,8 +20,8 @@ async function Clientes({ searchParams }: Pick<PageProps<"/clientes">, "searchPa
   const { q } = await searchParams;
   await exigirUsuario();
   const termo = typeof q === "string" ? q : "";
-  const clientes = await buscarClientes(termo, 200);
-  return <ListaClientes clientes={clientes} termoInicial={termo} />;
+  const [clientes, repetidos] = await Promise.all([buscarClientes(termo, 200), getClientesRepetidos()]);
+  return <ListaClientes clientes={clientes} termoInicial={termo} repetidos={repetidos} />;
 }
 
 function EsqueletoClientes() {
