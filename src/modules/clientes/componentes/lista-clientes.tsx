@@ -1,18 +1,19 @@
 "use client";
 
 import { Loader2, Search, UserPlus, Users } from "lucide-react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { formatarSP } from "@/lib/datas";
-import { formatarTelefone } from "@/lib/telefone";
 import { cn } from "@/lib/utils";
-import { juntarRepetidos } from "../acoes";
+import { excluirCliente, juntarRepetidos } from "../acoes";
 import type { ClienteResumo } from "../consultas";
 import type { GrupoRepetido } from "../repetidos";
 import { DrawerCliente } from "./drawer-cliente";
+import { LinhaCliente } from "./linha-cliente";
+
+/** Tempo para desfazer antes de apagar de verdade. */
+const TEMPO_DESFAZER = 6000;
 
 export function ListaClientes({
   clientes,
@@ -28,6 +29,42 @@ export function ListaClientes({
   const [termo, setTermo] = useState(termoInicial);
   const [novoAberto, setNovoAberto] = useState(false);
   const [buscando, startTransition] = useTransition();
+  const [abertoId, setAbertoId] = useState<string | null>(null);
+  // Somem da lista na hora; só são apagados no banco quando o aviso de desfazer termina.
+  const [apagando, setApagando] = useState<Set<string>>(new Set());
+  const visiveis = clientes.filter((c) => !apagando.has(c.id));
+
+  function apagar(c: ClienteResumo) {
+    setAbertoId(null);
+    setApagando((s) => new Set(s).add(c.id));
+    const voltar = () =>
+      setApagando((s) => {
+        const resto = new Set(s);
+        resto.delete(c.id);
+        return resto;
+      });
+    let decidido = false;
+    const confirmar = async () => {
+      if (decidido) return;
+      decidido = true;
+      const r = await excluirCliente(c.id);
+      voltar(); // já saiu da lista pelo refresh; se falhou, volta a aparecer
+      if (!r.ok) toast.error(r.erro);
+    };
+    toast(`${c.nome} apagado`, {
+      description: c.totalReservas > 0 ? "Os jogos e horários fixos dele saem junto." : undefined,
+      duration: TEMPO_DESFAZER,
+      action: {
+        label: "Desfazer",
+        onClick: () => {
+          decidido = true;
+          voltar();
+        },
+      },
+      onAutoClose: confirmar,
+      onDismiss: confirmar,
+    });
+  }
 
   // A busca fica na URL (?q=), assim voltar da ficha do cliente mantém o filtro.
   useEffect(() => {
@@ -67,7 +104,7 @@ export function ListaClientes({
 
       <div className={cn("px-4 pt-3 transition-opacity", buscando && "opacity-60")}>
         {repetidos.length > 0 && !termoInicial && <AvisoRepetidos grupos={repetidos} />}
-        {clientes.length === 0 ? (
+        {visiveis.length === 0 ? (
           <div className="mt-6 rounded-2xl border-2 border-dashed px-6 py-10 text-center">
             {termoInicial ? (
               <>
@@ -91,28 +128,15 @@ export function ListaClientes({
             </button>
           </div>
         ) : (
-          <ul className="divide-y rounded-xl border bg-card">
-            {clientes.map((c) => (
-              <li key={c.id}>
-                <Link
-                  href={`/clientes/${c.id}`}
-                  className="flex min-h-16 items-center justify-between gap-3 px-4 py-2.5 outline-none focus-visible:bg-muted active:bg-muted"
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate font-bold">{c.nome}</span>
-                    <span className="block text-xs text-muted-foreground">
-                      {formatarTelefone(c.telefone) || "Sem telefone"}
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-right text-xs leading-tight text-muted-foreground">
-                    <span className="block">
-                      <strong className="text-sm text-foreground">{c.totalReservas}</strong>{" "}
-                      {c.totalReservas === 1 ? "jogo" : "jogos"}
-                    </span>
-                    {c.ultimaReserva && <span className="block">{formatarSP(c.ultimaReserva, "dd/MM")}</span>}
-                  </span>
-                </Link>
-              </li>
+          <ul className="divide-y overflow-hidden rounded-xl border bg-card">
+            {visiveis.map((c) => (
+              <LinhaCliente
+                key={c.id}
+                cliente={c}
+                aberto={abertoId === c.id}
+                onAbrir={(aberto) => setAbertoId(aberto ? c.id : null)}
+                onApagar={() => apagar(c)}
+              />
             ))}
           </ul>
         )}
