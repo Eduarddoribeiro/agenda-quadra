@@ -26,12 +26,13 @@ const ultimaReserva = sql<Date | null>`(
 
 /**
  * Busca por nome ou telefone. Sem termo, ordena conforme `ordem`:
- * "frequentes" (mais reservas) ou "recentes" (último jogo mais novo).
+ * "alfabetica" (sem ligar para acento e maiúscula), "frequentes" (mais reservas)
+ * ou "recentes" (último jogo mais novo).
  */
 export async function buscarClientes(
   termo = "",
   limite = 50,
-  ordem: "frequentes" | "recentes" = "recentes",
+  ordem: "alfabetica" | "frequentes" | "recentes" = "alfabetica",
 ): Promise<ClienteResumo[]> {
   const busca = termo.trim();
   const digitos = busca.replace(/\D/g, "");
@@ -49,8 +50,8 @@ export async function buscarClientes(
     .from(clientes)
     .where(filtro)
     .orderBy(
-      busca
-        ? asc(clientes.nome)
+      busca || ordem === "alfabetica"
+        ? asc(chaveDoNomeSql(clientes.nome))
         : ordem === "frequentes"
           ? sql`${totalReservas} desc`
           : sql`${ultimaReserva} desc nulls last`,
