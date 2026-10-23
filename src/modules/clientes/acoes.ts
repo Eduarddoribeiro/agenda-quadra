@@ -24,10 +24,10 @@ function validar(dados: DadosCliente) {
   };
 }
 
-/** Usada pela busca do bottom sheet de reserva (client component). */
+/** Usada pela busca do bottom sheet de reserva (client component). Sem termo, lista todos de A a Z. */
 export async function pesquisarClientes(termo: string): Promise<ClienteResumo[]> {
   await exigirUsuario();
-  return buscarClientes(termo, 8, "frequentes");
+  return buscarClientes(termo, termo.trim() ? 8 : 200, "alfabetica");
 }
 
 /** Se já existe cliente com o mesmo nome, devolve ele (`existente`) em vez de repetir o cadastro. */

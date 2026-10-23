@@ -76,7 +76,7 @@ function FormularioReserva({ dia, slot, onFechar }: { dia: AgendaDia; slot: Slot
   const [buscando, startBusca] = useTransition();
   const [salvando, startSalvar] = useTransition();
 
-  // Busca com pequeno atraso enquanto digita; sem termo, mostra os clientes que mais jogam.
+  // Busca com pequeno atraso enquanto digita; sem termo, mostra todos os clientes de A a Z.
   useEffect(() => {
     if (selecionado || cadastrando) return;
     const id = setTimeout(() => {
@@ -278,9 +278,9 @@ function FormularioReserva({ dia, slot, onFechar }: { dia: AgendaDia; slot: Slot
               )}
             </div>
 
-            <ul className="mt-2 divide-y" aria-label={termo ? "Clientes encontrados" : "Clientes frequentes"}>
+            <ul className="mt-2 divide-y" aria-label={termo ? "Clientes encontrados" : "Clientes de A a Z"}>
               {!termo && resultados && resultados.length > 0 && (
-                <li className="pt-2 pb-1 text-xs text-muted-foreground">Frequentes</li>
+                <li className="pt-2 pb-1 text-xs text-muted-foreground">Clientes de A a Z</li>
               )}
               {resultados?.map((c) => (
                 <li key={c.id}>
