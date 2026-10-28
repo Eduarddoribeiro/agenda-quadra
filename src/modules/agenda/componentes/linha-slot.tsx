@@ -100,7 +100,7 @@ export function LinhaSlot({ slot, onReservar, onAbrirReserva }: Props) {
               target="_blank"
               rel="noreferrer"
               aria-label={`Conversar com ${slot.reserva.clienteNome} no WhatsApp`}
-              className="grid w-14 shrink-0 place-items-center border-l text-whatsapp outline-none focus-visible:bg-muted active:bg-muted"
+              className="grid w-14 shrink-0 place-items-center border-l text-foreground outline-none focus-visible:bg-muted active:bg-muted"
             >
               <IconeWhatsApp className="size-6" />
             </a>

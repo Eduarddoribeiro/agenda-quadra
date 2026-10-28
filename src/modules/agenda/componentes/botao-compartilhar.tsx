@@ -35,7 +35,7 @@ export function BotaoCompartilhar({ texto, className, rotulo = "Compartilhar liv
       type="button"
       onClick={compartilhar}
       className={cn(
-        "flex h-11 items-center gap-2 rounded-full border-2 border-foreground px-4 text-sm font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/60 active:bg-muted",
+        "flex h-11 shrink-0 items-center gap-2 rounded-full border-2 border-foreground px-4 text-sm font-bold whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/60 active:bg-muted",
         className,
       )}
     >

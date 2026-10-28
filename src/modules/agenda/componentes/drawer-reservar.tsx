@@ -293,7 +293,7 @@ function FormularioReserva({ dia, slot, onFechar }: { dia: AgendaDia; slot: Slot
                       <span className="block truncate font-semibold">
                         {c.nome}
                         {c.id === mesmoNome?.id && (
-                          <span className="ml-2 rounded-full bg-livre-fundo px-2 py-0.5 text-[11px] font-bold text-livre-tinta">
+                          <span className="ml-2 rounded-full bg-livre-fundo px-2 py-0.5 text-xs font-bold text-livre-tinta">
                             Já cadastrado
                           </span>
                         )}
@@ -381,7 +381,7 @@ function FormularioReserva({ dia, slot, onFechar }: { dia: AgendaDia; slot: Slot
           onClick={confirmar}
           disabled={!podeConfirmar || salvando}
           className={cn(
-            "flex h-14 w-full items-center justify-center gap-2 rounded-full bg-livre text-base font-bold text-white outline-none transition-opacity focus-visible:ring-3 focus-visible:ring-ring/60 disabled:opacity-40 dark:text-[#06210f]",
+            "flex h-14 w-full items-center justify-center gap-2 rounded-full bg-livre text-base font-bold text-sobre-verde outline-none transition-opacity focus-visible:ring-3 focus-visible:ring-ring/60 disabled:opacity-40",
           )}
         >
           {salvando && <Loader2 className="size-5 animate-spin" aria-hidden />}

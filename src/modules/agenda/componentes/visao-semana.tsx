@@ -32,7 +32,10 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
   const primeira = minutos.length ? Math.min(...minutos) : 8 * 60;
   const ultima = minutos.length ? Math.max(...minutos) + DURACAO_SLOT : 23 * 60;
   const colunas = (ultima - primeira) / 30;
-  const meio = primeira + Math.round(colunas / 2) * 30;
+  // Marcas da régua: abertura, meio-dia, 18h (quando começa o movimento) e fechamento.
+  const marcas = [primeira, 12 * 60, 18 * 60, ultima].filter(
+    (m, i, todas) => (i === 0 || i === todas.length - 1 || (m > primeira + 120 && m < ultima - 120)),
+  );
 
   return (
     <div>
@@ -84,12 +87,18 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
         </div>
 
         {/* Régua de horas alinhada com as faixas */}
-        <div className="grid grid-cols-[3.5rem_1fr_4.25rem] gap-3 pb-1 text-[11px] text-muted-foreground" aria-hidden>
+        <div className="grid grid-cols-[3.5rem_1fr_4.25rem] gap-3 pb-1 text-xs text-muted-foreground" aria-hidden>
           <span />
-          <div className="flex justify-between">
-            <span>{rotuloHorario(primeira)}</span>
-            <span>{rotuloHorario(meio)}</span>
-            <span>{rotuloHorario(ultima)}</span>
+          <div className="relative h-4">
+            {marcas.map((m, i) => (
+              <span
+                key={m}
+                className={cn("absolute", i > 0 && i < marcas.length - 1 && "-translate-x-1/2", i === marcas.length - 1 && "-translate-x-full")}
+                style={{ left: `${((m - primeira) / (ultima - primeira)) * 100}%` }}
+              >
+                {rotuloHorario(m)}
+              </span>
+            ))}
           </div>
           <span />
         </div>
@@ -106,14 +115,15 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
                   className={cn(
                     "grid min-h-18 grid-cols-[3.5rem_1fr_4.25rem] items-center gap-3 rounded-xl border bg-card px-3 py-2 outline-none focus-visible:ring-3 focus-visible:ring-ring/60 active:bg-muted",
                     ehHoje && "border-2 border-foreground",
-                    passou && "opacity-70",
                   )}
                 >
                   <span className="flex flex-col leading-none">
                     <span className={cn("text-xs", ehHoje ? "font-bold text-agora" : "text-muted-foreground")}>
                       {ehHoje ? "hoje" : DIAS_SEMANA_CURTOS[diaDaSemana(dia.data)]}
                     </span>
-                    <span className="font-placar mt-1 text-[2.25rem]">{Number(dia.data.slice(8))}</span>
+                    <span className={cn("font-placar mt-1 text-[2.25rem]", passou && "text-muted-foreground")}>
+                      {Number(dia.data.slice(8))}
+                    </span>
                   </span>
 
                   {dia.aberto ? (

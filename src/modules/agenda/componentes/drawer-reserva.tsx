@@ -128,7 +128,7 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
                   href={linkWhatsApp(reserva.clienteTelefone, mensagem)}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex h-13 items-center justify-center gap-2 rounded-full bg-whatsapp font-bold text-white outline-none focus-visible:ring-3 focus-visible:ring-ring/60 dark:text-[#06210f]"
+                  className="flex h-13 items-center justify-center gap-2 rounded-full bg-whatsapp font-bold text-sobre-verde outline-none focus-visible:ring-3 focus-visible:ring-ring/60"
                 >
                   <IconeWhatsApp className="size-5" />
                   Enviar confirmação

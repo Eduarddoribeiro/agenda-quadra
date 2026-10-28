@@ -24,7 +24,7 @@ export default function PaginaEntrar() {
           className="mx-auto mt-6 w-[72%] max-w-80"
         />
 
-        <h1 className="font-placar mt-2 text-center text-[2.5rem] leading-none">Agenda da quadra</h1>
+        <h1 className="titulo-tela font-placar mt-2 text-center text-[2.5rem] leading-none">Agenda da quadra</h1>
         <p className="mt-2 text-center text-white/60">Entre para ver os horários e marcar jogos.</p>
 
         <div className="mt-8 pb-10">

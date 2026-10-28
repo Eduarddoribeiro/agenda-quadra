@@ -39,7 +39,7 @@ export function FormularioLogin() {
       <button
         type="submit"
         disabled={pendente}
-        className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-livre text-base font-bold text-sobre-verde outline-none focus-visible:ring-3 focus-visible:ring-white/50 disabled:opacity-50"
+        className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-white text-base font-bold text-black outline-none focus-visible:ring-3 focus-visible:ring-white/50 disabled:opacity-50"
       >
         {pendente && <Loader2 className="size-5 animate-spin" aria-hidden />}
         Entrar

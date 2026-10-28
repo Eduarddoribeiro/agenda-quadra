@@ -75,7 +75,10 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
       <header className="cabecalho sticky top-0 z-30 bg-background px-4 pt-4 pb-3">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="titulo-tela font-placar text-[3.25rem] leading-[0.85]">{ehHoje ? "Hoje" : nomeDoDia(data)}</h1>
+            {/* Nome do dia em caixa alta é mais largo que "HOJE": um pouco menor para caber ao lado das setas. */}
+            <h1 className={cn("titulo-tela font-placar leading-[0.85]", ehHoje ? "text-[3.25rem]" : "text-[2.75rem]")}>
+              {ehHoje ? "Hoje" : nomeDoDia(data)}
+            </h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
               {ehHoje ? `${nomeDoDia(data)}, ` : ""}
               {formatarData(data, "d 'de' MMMM")}
@@ -162,7 +165,7 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
                   <strong>{slots.some((s) => !s.passado) ? "Tudo reservado" : "Dia encerrado"}</strong>
                 )}
               </p>
-              {livres.length > 0 && <BotaoCompartilhar texto={texto} />}
+              {livres.length > 0 && <BotaoCompartilhar texto={texto} rotulo="Compartilhar" />}
             </div>
 
             <ol className="space-y-2.5">
