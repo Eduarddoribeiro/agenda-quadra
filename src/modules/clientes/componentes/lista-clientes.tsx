@@ -43,26 +43,22 @@ export function ListaClientes({
         resto.delete(c.id);
         return resto;
       });
-    let decidido = false;
-    const confirmar = async () => {
-      if (decidido) return;
-      decidido = true;
+    // O prazo corre por conta própria: fechar o aviso não apaga antes da hora.
+    const prazo = setTimeout(async () => {
       const r = await excluirCliente(c.id);
       voltar(); // já saiu da lista pelo refresh; se falhou, volta a aparecer
       if (!r.ok) toast.error(r.erro);
-    };
+    }, TEMPO_DESFAZER);
     toast(`${c.nome} apagado`, {
       description: c.totalReservas > 0 ? "Os jogos e horários fixos dele saem junto." : undefined,
       duration: TEMPO_DESFAZER,
       action: {
         label: "Desfazer",
         onClick: () => {
-          decidido = true;
+          clearTimeout(prazo);
           voltar();
         },
       },
-      onAutoClose: confirmar,
-      onDismiss: confirmar,
     });
   }
 
@@ -77,9 +73,9 @@ export function ListaClientes({
 
   return (
     <div>
-      <header className="sticky top-0 z-30 border-b bg-background px-4 pt-4 pb-3">
+      <header className="cabecalho sticky top-0 z-30 bg-background px-4 pt-4 pb-3">
         <div className="flex items-end justify-between gap-3">
-          <h1 className="font-placar text-[3.25rem] leading-[0.85]">Clientes</h1>
+          <h1 className="titulo-tela font-placar text-[3.25rem] leading-[0.85]">Clientes</h1>
           <button
             type="button"
             onClick={() => setNovoAberto(true)}

@@ -10,7 +10,7 @@ import { BotaoCompartilhar } from "./botao-compartilhar";
 function corDaCelula(slot: Slot) {
   if (slot.estado === "reservado") return slot.passado ? "bg-foreground/35" : "bg-foreground";
   if (slot.estado === "bloqueado") return slot.passado ? "bg-amarelo/40" : "bg-amarelo";
-  return slot.passado ? "bg-muted" : "bg-livre/80";
+  return slot.passado ? "bg-foreground/12" : "bg-livre/80";
 }
 
 function intervaloDaSemana(segunda: DataISO) {
@@ -36,10 +36,10 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
 
   return (
     <div>
-      <header className="sticky top-0 z-30 border-b bg-background px-4 pt-4 pb-3">
+      <header className="cabecalho sticky top-0 z-30 bg-background px-4 pt-4 pb-3">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <h1 className="font-placar text-[3.25rem] leading-[0.85]">Semana</h1>
+            <h1 className="titulo-tela font-placar text-[3.25rem] leading-[0.85]">Semana</h1>
             <p className="mt-1.5 text-sm text-muted-foreground">{intervaloDaSemana(segunda)}</p>
           </div>
           <div className="flex items-center gap-1">
@@ -106,7 +106,7 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
                   className={cn(
                     "grid min-h-18 grid-cols-[3.5rem_1fr_4.25rem] items-center gap-3 rounded-xl border bg-card px-3 py-2 outline-none focus-visible:ring-3 focus-visible:ring-ring/60 active:bg-muted",
                     ehHoje && "border-2 border-foreground",
-                    passou && "opacity-55",
+                    passou && "opacity-70",
                   )}
                 >
                   <span className="flex flex-col leading-none">
@@ -154,7 +154,7 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
           <li className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-livre/80" />Livre</li>
           <li className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-foreground" />Reservado</li>
           <li className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-amarelo" />Bloqueado</li>
-          <li className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-muted" />Já passou</li>
+          <li className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-foreground/12" />Já passou</li>
         </ul>
       </div>
     </div>

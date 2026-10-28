@@ -18,8 +18,8 @@ export const metadata: Metadata = { title: "Ajustes" };
 export default function PaginaAjustes() {
   return (
     <div>
-      <header className="border-b px-4 pt-4 pb-3">
-        <h1 className="font-placar text-[3.25rem] leading-[0.85]">Ajustes</h1>
+      <header className="cabecalho px-4 pt-4 pb-3">
+        <h1 className="titulo-tela font-placar text-[3.25rem] leading-[0.85]">Ajustes</h1>
       </header>
       <Suspense fallback={<EsqueletoAjustes />}>
         <Conteudo />

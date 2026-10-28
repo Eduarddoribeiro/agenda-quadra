@@ -59,7 +59,7 @@ export function BarraNavegacaoBase({ pathname }: { pathname: string | null }) {
                 <span
                   aria-hidden
                   className={cn(
-                    "absolute top-0 h-[3px] w-10 rounded-b-full bg-foreground transition-opacity",
+                    "absolute top-0 h-[3px] w-10 rounded-b-full bg-destaque transition-opacity",
                     ativo ? "opacity-100" : "opacity-0",
                   )}
                 />

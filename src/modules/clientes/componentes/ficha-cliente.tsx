@@ -103,7 +103,7 @@ export function FichaCliente({
               href={linkWhatsApp(cliente.telefone)}
               target="_blank"
               rel="noreferrer"
-              className="flex h-12 items-center justify-center gap-2 rounded-full bg-whatsapp font-bold text-white dark:text-[#06210f]"
+              className="flex h-12 items-center justify-center gap-2 rounded-full bg-whatsapp font-bold text-sobre-verde"
             >
               <IconeWhatsApp className="size-5" />
               Conversar no WhatsApp

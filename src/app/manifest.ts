@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { marca } from "@/lib/demo";
+import { marca, modoDemo } from "@/lib/demo";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -12,7 +12,7 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     orientation: "portrait",
     background_color: "#000000",
-    theme_color: "#e8ecf0",
+    theme_color: modoDemo ? "#e8ecf0" : "#000000",
     icons: [
       { src: "/icones/192.png", sizes: "192x192", type: "image/png" },
       { src: "/icones/512.png", sizes: "512x512", type: "image/png" },

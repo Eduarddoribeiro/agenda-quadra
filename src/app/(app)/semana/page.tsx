@@ -32,7 +32,7 @@ async function Semana({ searchParams }: Pick<PageProps<"/semana">, "searchParams
 function EsqueletoSemana() {
   return (
     <div aria-busy aria-label="Carregando semana">
-      <div className="border-b px-4 pt-4 pb-3">
+      <div className="cabecalho px-4 pt-4 pb-3">
         <Skeleton className="h-11 w-44" />
         <Skeleton className="mt-2 h-4 w-36" />
       </div>

@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function EsqueletoDia() {
   return (
     <div aria-busy aria-label="Carregando horários">
-      <div className="border-b px-4 pt-4 pb-3">
+      <div className="cabecalho px-4 pt-4 pb-3">
         <Skeleton className="h-11 w-36" />
         <Skeleton className="mt-2 h-4 w-40" />
         <div className="mt-3 grid grid-cols-7 gap-1">

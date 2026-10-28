@@ -22,7 +22,7 @@ function Hora({ slot }: { slot: Slot }) {
         minuto={slot.reserva ? minutoSP(slot.reserva.inicio) : slot.minuto}
         className={cn(
           "text-[2.75rem]",
-          slot.agora ? "text-agora" : slot.passado ? "text-muted-foreground/60" : "text-foreground",
+          slot.agora ? "text-agora" : slot.passado ? "text-muted-foreground" : "text-foreground",
         )}
       />
     </div>
@@ -43,7 +43,7 @@ export function LinhaSlot({ slot, onReservar, onAbrirReserva }: Props) {
       {slot.agora && (
         <div aria-hidden className="absolute -top-1.5 right-0 left-0 flex items-center gap-2">
           <span className="h-0.5 flex-1 bg-agora" />
-          <span className="text-[11px] font-bold text-agora">agora</span>
+          <span className="text-xs font-bold text-agora">agora</span>
         </div>
       )}
 
@@ -66,7 +66,7 @@ export function LinhaSlot({ slot, onReservar, onAbrirReserva }: Props) {
                 até {fimHora}
               </span>
             </span>
-            <span className="flex h-12 items-center gap-1.5 rounded-full bg-livre px-5 text-[15px] font-bold text-white dark:text-[#06210f]">
+            <span className="flex h-12 items-center gap-1.5 rounded-full bg-livre px-5 text-[15px] font-bold text-sobre-verde">
               <Plus className="size-5" strokeWidth={2.75} aria-hidden />
               Reservar
             </span>
@@ -83,7 +83,7 @@ export function LinhaSlot({ slot, onReservar, onAbrirReserva }: Props) {
           <button
             type="button"
             onClick={() => onAbrirReserva(slot)}
-            className="min-w-0 flex-1 border-l-4 border-l-foreground py-2.5 pr-2 pl-3 text-left outline-none focus-visible:bg-muted"
+            className="min-w-0 flex-1 py-2.5 pr-2 pl-4 text-left outline-none focus-visible:bg-muted"
           >
             <span className="flex items-center gap-1.5">
               {slot.reserva.fixaId && <Repeat className="size-4 shrink-0" aria-label="Horário fixo" />}

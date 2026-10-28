@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { rotuloHorario } from "@/lib/datas";
-import { calcularSlots, conflitoNoIntervalo, linhasDoDia, slotsLivresFuturos, type BloqueioNoSlot, type ReservaNoSlot } from "./slots";
+import { calcularSlots, conflitoNoIntervalo, juntarPassadosLivres, linhasDoDia, slotsLivresFuturos, type BloqueioNoSlot, type ReservaNoSlot } from "./slots";
 
 const DATA = "2026-10-20"; // terça
 const MADRUGADA = new Date("2026-10-20T03:00:00Z"); // 00:00 em São Paulo
@@ -168,5 +168,25 @@ describe("jogo fora da grade (vôlei das 14h30 às 16h)", () => {
     expect(conflitoNoIntervalo(slots, das("2026-10-20T13:00:00-03:00", "2026-10-20T14:30:00-03:00"))).toBeUndefined();
     expect(conflitoNoIntervalo(slots, das("2026-10-20T13:30:00-03:00", "2026-10-20T15:00:00-03:00"))?.reserva?.clienteNome).toBe("Ana");
     expect(conflitoNoIntervalo(slots, das("2026-10-20T16:00:00-03:00", "2026-10-20T17:30:00-03:00"))).toBeUndefined();
+  });
+});
+
+describe("juntarPassadosLivres", () => {
+  it("horas livres que já passaram viram uma linha só; jogos passados continuam", () => {
+    const slots = calcularSlots({
+      data: DATA,
+      periodos: [{ abertura: "08:00:00", fechamento: "14:00:00" }],
+      reservas: [reserva("2026-10-20T13:00:00Z", "2026-10-20T14:00:00Z")], // 10h
+      bloqueios: [],
+      agora: new Date("2026-10-20T15:30:00Z"), // 12h30
+    });
+    const linhas = juntarPassadosLivres(linhasDoDia(slots));
+    expect(linhas.map((l) => ("tipo" in l ? `${l.de / 60}-${l.ate / 60}` : l.estado))).toEqual([
+      "8-10",
+      "reservado",
+      "11-12",
+      "livre",
+      "livre",
+    ]);
   });
 });

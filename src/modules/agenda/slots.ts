@@ -109,6 +109,23 @@ export function linhasDoDia(slots: Slot[]): Slot[] {
   return slots.filter((s, i) => !s.reserva || slots[i - 1]?.reserva?.id !== s.reserva.id);
 }
 
+/** Horários que já passaram sem jogo, em sequência: viram uma linha curta na tela do dia. */
+export type PassadosLivres = { tipo: "passados"; de: number; ate: number; quantos: number };
+
+/** Junta os livres que já passaram, para os horários que ainda servem aparecerem logo. */
+export function juntarPassadosLivres(linhas: Slot[]): (Slot | PassadosLivres)[] {
+  const saida: (Slot | PassadosLivres)[] = [];
+  for (const s of linhas) {
+    const anterior = saida.at(-1);
+    if (s.estado !== "livre" || !s.passado) saida.push(s);
+    else if (anterior && "tipo" in anterior && anterior.ate === s.minuto) {
+      anterior.ate = s.minuto + 60;
+      anterior.quantos++;
+    } else saida.push({ tipo: "passados", de: s.minuto, ate: s.minuto + 60, quantos: 1 });
+  }
+  return saida;
+}
+
 /** Primeiro slot ocupado (reserva ou bloqueio) que choca com o intervalo. */
 export function conflitoNoIntervalo(slots: Slot[], intervalo: Intervalo): Slot | undefined {
   return slots.find((s) => s.estado !== "livre" && sobrepoe(s.reserva ?? s.bloqueio ?? s, intervalo));

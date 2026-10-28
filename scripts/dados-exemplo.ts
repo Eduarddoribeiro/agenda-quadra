@@ -48,6 +48,7 @@ async function main() {
 
   await sql`delete from reservas`;
   await sql`delete from bloqueios`;
+  await sql`delete from reservas_fixas`;
   await sql`delete from clientes`;
 
   const ids: string[] = [];

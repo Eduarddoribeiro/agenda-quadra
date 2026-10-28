@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Archivo } from "next/font/google";
 import { RegistrarServiceWorker } from "@/components/registrar-sw";
 import { Toaster } from "@/components/ui/sonner";
-import { marca } from "@/lib/demo";
+import { marca, modoDemo } from "@/lib/demo";
 import "./globals.css";
 
 // Uma família só: o eixo de largura (wdth) faz os numerais de placar e o texto corrido.
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: { default: marca.nome, template: `%s – ${marca.nome}` },
   description: marca.descricao,
   applicationName: marca.nome,
-  appleWebApp: { capable: true, title: marca.nomeCurto, statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: marca.nomeCurto, statusBarStyle: modoDemo ? "default" : "black" },
   formatDetection: { telephone: false },
 };
 
@@ -24,15 +24,18 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#e8ecf0" },
-    { media: "(prefers-color-scheme: dark)", color: "#0d1626" },
-  ],
+  // Krahe: preto do escudo, sempre. Demonstração: acompanha o tema do celular.
+  themeColor: modoDemo
+    ? [
+        { media: "(prefers-color-scheme: light)", color: "#e8ecf0" },
+        { media: "(prefers-color-scheme: dark)", color: "#0d1626" },
+      ]
+    : "#000000",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pt-BR" className={`${archivo.variable} h-full antialiased`}>
+    <html lang="pt-BR" data-marca={modoDemo ? "neutra" : "krahe"} className={`${archivo.variable} h-full antialiased`}>
       <body className="min-h-full">
         {children}
         <Toaster />

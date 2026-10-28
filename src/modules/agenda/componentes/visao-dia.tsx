@@ -10,13 +10,14 @@ import {
   formatarData,
   inicioDaSemana,
   nomeDoDia,
+  rotuloHorario,
   somarDias,
   type DataISO,
 } from "@/lib/datas";
 import { cn } from "@/lib/utils";
 import { textoHorariosLivres } from "../compartilhar";
 import type { AgendaDia } from "../consultas";
-import { linhasDoDia, slotsLivresFuturos, type Slot } from "../slots";
+import { juntarPassadosLivres, linhasDoDia, slotsLivresFuturos, type Slot } from "../slots";
 import { BotaoCompartilhar } from "./botao-compartilhar";
 import { DrawerReserva } from "./drawer-reserva";
 import { DrawerReservar } from "./drawer-reservar";
@@ -33,6 +34,7 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
 
   const livres = useMemo(() => slotsLivresFuturos(slots), [slots]);
   const linhas = useMemo(() => linhasDoDia(slots), [slots]);
+  const linhasNaTela = useMemo(() => juntarPassadosLivres(linhas), [linhas]);
   const reservados = linhas.filter((s) => s.estado === "reservado").length;
   const texto = useMemo(() => textoHorariosLivres([{ data, slots }]), [data, slots]);
 
@@ -70,10 +72,10 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
 
   return (
     <div>
-      <header className="sticky top-0 z-30 border-b bg-background px-4 pt-4 pb-3">
+      <header className="cabecalho sticky top-0 z-30 bg-background px-4 pt-4 pb-3">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="font-placar text-[3.25rem] leading-[0.85]">{ehHoje ? "Hoje" : nomeDoDia(data)}</h1>
+            <h1 className="titulo-tela font-placar text-[3.25rem] leading-[0.85]">{ehHoje ? "Hoje" : nomeDoDia(data)}</h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
               {ehHoje ? `${nomeDoDia(data)}, ` : ""}
               {formatarData(data, "d 'de' MMMM")}
@@ -120,11 +122,10 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
                 className={cn(
                   "relative flex h-13 flex-col items-center justify-center rounded-lg text-xs leading-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/60",
                   selecionado ? "bg-primary text-primary-foreground" : "text-muted-foreground active:bg-muted",
-                  d < hoje && !selecionado && "opacity-55",
                 )}
               >
                 <span>{DIAS_SEMANA_CURTOS[diaDaSemana(d)]}</span>
-                <span className={cn("text-base font-bold", !selecionado && "text-foreground")}>{Number(d.slice(8))}</span>
+                <span className={cn("text-base font-bold", !selecionado && (d < hoje ? "text-muted-foreground" : "text-foreground"))}>{Number(d.slice(8))}</span>
                 {d === hoje && !selecionado && (
                   <span aria-label="hoje" className="absolute bottom-1 size-1 rounded-full bg-agora" />
                 )}
@@ -165,9 +166,18 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
             </div>
 
             <ol className="space-y-2.5">
-              {linhas.map((slot) => (
-                <LinhaSlot key={slot.minuto} slot={slot} onReservar={setSlotReservar} onAbrirReserva={setSlotAberto} />
-              ))}
+              {linhasNaTela.map((l) =>
+                "tipo" in l ? (
+                  <li key={`passados-${l.de}`} className="grid grid-cols-[4.25rem_1fr] gap-2">
+                    <span aria-hidden />
+                    <p className="flex min-h-11 items-center rounded-xl border border-dashed px-4 text-sm text-muted-foreground">
+                      {rotuloHorario(l.de)} às {rotuloHorario(l.ate)} · {l.quantos === 1 ? "ficou livre" : "ficaram livres"}
+                    </p>
+                  </li>
+                ) : (
+                  <LinhaSlot key={l.minuto} slot={l} onReservar={setSlotReservar} onAbrirReserva={setSlotAberto} />
+                ),
+              )}
             </ol>
           </>
         ) : (
