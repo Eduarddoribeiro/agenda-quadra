@@ -1,11 +1,14 @@
 "use client";
 
 import { CalendarRange, Settings2, Users } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
 import { hojeSP } from "@/lib/datas";
+import { modoDemo } from "@/lib/demo";
+import logo from "@/app/entrar/logo.webp";
 
 const ITENS = [
   { href: "/", rotulo: "Hoje", icone: null },
@@ -34,6 +37,17 @@ export function BarraNavegacao() {
   return <BarraNavegacaoBase pathname={usePathname()} />;
 }
 
+/** Escudo do ginásio no meio da barra, saltando um pouco acima dela. A demo não leva a marca do Krahe. */
+function Escudo() {
+  return (
+    <li aria-hidden className="relative flex justify-center">
+      <span className="absolute -top-4 size-[4.5rem] overflow-hidden rounded-full border-t bg-black">
+        <Image src={logo} alt="" sizes="72px" className="size-full scale-[1.15] object-cover" />
+      </span>
+    </li>
+  );
+}
+
 /** Versão sem hook: serve de fallback do Suspense enquanto a rota atual não é conhecida. */
 export function BarraNavegacaoBase({ pathname }: { pathname: string | null }) {
 
@@ -42,10 +56,10 @@ export function BarraNavegacaoBase({ pathname }: { pathname: string | null }) {
       aria-label="Principal"
       className="pb-seguro fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/85"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4">
-        {ITENS.map(({ href, rotulo, icone: Icone }) => {
+      <ul className={cn("mx-auto grid max-w-md", modoDemo ? "grid-cols-4" : "grid-cols-5")}>
+        {ITENS.flatMap(({ href, rotulo, icone: Icone }, i) => {
           const ativo = pathname !== null && (href === "/" ? pathname === "/" : pathname.startsWith(href));
-          return (
+          const item = (
             <li key={href}>
               <Link
                 href={href}
@@ -68,6 +82,7 @@ export function BarraNavegacaoBase({ pathname }: { pathname: string | null }) {
               </Link>
             </li>
           );
+          return i === 2 && !modoDemo ? [<Escudo key="escudo" />, item] : [item];
         })}
       </ul>
     </nav>
