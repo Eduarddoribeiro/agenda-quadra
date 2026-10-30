@@ -1,6 +1,6 @@
 ---
 name: Agenda do Krahe
-description: Agenda da quadra de futsal do Ginásio do Krahe, vestida com o escudo do ginásio; a demonstração De Primeira usa a marca neutra.
+description: Agenda da quadra de futsal do Ginásio do Krahe, vestida com o escudo do ginásio; a demonstração De Primeira usa o mesmo visual, sem o nome e o escudo do Krahe.
 colors:
   chao-escudo: "#000000"
   letra-branca: "#f5f5f4"
@@ -134,7 +134,7 @@ components:
 
 A agenda veste o escudo do Ginásio do Krahe (`marca/logo-ginasio-krahe.png`): chão preto total, letras brancas, e as três cores do escudo (verde, amarelo, vermelho) trabalhando com função fixa, nunca como enfeite. Os horários aparecem como numerais de placar de ginásio, estreitos e pesados, e o título de cada tela fica em caixa alta como o "KRAHE" do escudo. O dono reconhece o ginásio dele ao abrir o app.
 
-A marca Krahe é **sempre escura**, de dia e de noite: o atributo `data-marca="krahe"` no `<html>` faz a variante `dark:` valer o tempo todo, `color-scheme: dark` acompanha os controles nativos e o `theme-color` é `#000000`. A demonstração De Primeira usa `data-marca="neutra"`: concreto claro e azul-noite, que segue o tema do celular. Nada do Krahe (nome, logo, faixa tricolor, caixa alta dos títulos) aparece na demo; a faixa e a caixa alta são escopadas a `[data-marca="krahe"]` no CSS.
+O app é **sempre escuro**, de dia e de noite: a variante `dark:` vale o tempo todo, `color-scheme: dark` acompanha os controles nativos e o `theme-color` é `#000000`. A demonstração De Primeira usa o mesmo visual (paleta, faixa tricolor, caixa alta); só o nome e o escudo do Krahe ficam de fora, decididos por `modoDemo` (`src/lib/demo.ts`).
 
 É um app de operação, de uma mão, em ~375px. O mundo empresta paleta, tipo e um gesto assinatura (a faixa tricolor fechando o cabeçalho); navegação inferior, gavetas e controles seguem padrões conhecidos. Densidade média: uma linha de horário por toque, com alvos de 44 a 64px.
 
@@ -147,7 +147,7 @@ A marca Krahe é **sempre escura**, de dia e de noite: o atributo `data-marca="k
 
 ## Colors
 
-Preto do escudo com três cores de sinal, cada uma com um só trabalho. Os tokens vivem em `src/app/globals.css` (`:root` para o Krahe; `[data-marca="neutra"]` e seu bloco `prefers-color-scheme: dark` para a demo) e são expostos ao Tailwind como `bg-livre`, `text-agora`, `bg-amarelo-fundo` etc.
+Preto do escudo com três cores de sinal, cada uma com um só trabalho. Os tokens vivem em `src/app/globals.css` (`:root`, os mesmos no Krahe e na demo) e são expostos ao Tailwind como `bg-livre`, `text-agora`, `bg-amarelo-fundo` etc.
 
 ### Primary
 - **Verde Livre** (`--livre`): o horário livre e a ação de reservar. Preenche o botão Reservar, o botão Confirmar reserva, o contador "N horários livres" e as células livres da Semana (a 80%).
@@ -172,9 +172,6 @@ Preto do escudo com três cores de sinal, cada uma com um só trabalho. Os token
 - **Cinza Legenda** (`--muted-foreground`): datas sob o título, telefones, legendas, horas que já passaram.
 - **Linha Grafite** (`--border`) e **Borda de Campo** (`--input`): divisórias, contornos de cartão e de campo.
 - **Faixas do Escudo** (`--escudo-verde`, `--escudo-amarelo`, `--escudo-vermelho`): as cores exatas do logo, usadas apenas na faixa tricolor do cabeçalho.
-
-### Marca neutra (demonstração De Primeira)
-Mesmos nomes de token, outros valores: claro com fundo concreto `#e8ecf0`, texto e botão principal azul-noite `#0f1b2d`, livre `#0b7a41`, agora laranja `#e0531f`; no escuro do celular, fundo `#0d1626`, cartão `#15213a`, livre `#3dd68c`. Ali `--destaque` é a própria cor do texto, não amarelo. Os valores completos estão no sidecar (`.impeccable/design.json`, `extensions.marcas.neutra`).
 
 ### Named Rules
 **The Three Jobs Rule.** Verde é livre e reservar, amarelo é bloqueio e foco, vermelho é agora e apagar. Uma cor do escudo nunca assume o trabalho de outra, e nenhuma aparece só para decorar.
@@ -201,7 +198,7 @@ Mesmos nomes de token, outros valores: claro com fundo concreto `#e8ecf0`, texto
 ### Named Rules
 **The Scoreboard Rule.** `font-placar` é para números e títulos de tela: horários, dias do mês, contagens e o título em caixa alta. Frase corrida nunca usa o eixo estreito.
 
-**The Crest Caps Rule.** A caixa alta vem da classe `.titulo-tela`, escopada ao Krahe. Não escreva caixa alta no texto nem use `uppercase` solto, senão vaza para a demo.
+**The Crest Caps Rule.** A caixa alta vem da classe `.titulo-tela`. Não escreva caixa alta no texto nem use `uppercase` solto.
 
 ## Layout
 
@@ -267,7 +264,7 @@ Barra inferior de 4 itens (Hoje, Semana, Clientes, Ajustes), ícones de 24px e r
 Sete dias sob o título; o selecionado vira bloco branco com texto preto, hoje (quando não selecionado) leva um ponto vermelho de 4px, dias passados ficam em cinza.
 
 ### Faixa tricolor do cabeçalho
-O `.cabecalho` do Krahe troca a borda inferior por 3px divididos em terços: `--escudo-verde`, `--escudo-amarelo`, `--escudo-vermelho`, com 2px de preto entre eles. Na marca neutra é uma borda simples de 1px.
+O `.cabecalho` fecha embaixo com 3px divididos em terços: `--escudo-verde`, `--escudo-amarelo`, `--escudo-vermelho`, com 2px de preto entre eles.
 
 ### Gavetas
 Sobem de baixo em `--popover`, canto superior de 1.05rem, com alça de arrastar. Cabeçalho com numeral de placar ou nome do cliente, corpo rolável, rodapé com a ação principal.
@@ -275,16 +272,16 @@ Sobem de baixo em `--popover`, canto superior de 1.05rem, com alça de arrastar.
 ## Do's and Don'ts
 
 ### Do:
-- **Do** use `.cabecalho` e `.titulo-tela font-placar` em toda tela nova do app; a faixa tricolor e a caixa alta aparecem sozinhas no Krahe e somem na demo.
+- **Do** use `.cabecalho` e `.titulo-tela font-placar` em toda tela nova do app; a faixa tricolor e a caixa alta aparecem sozinhas.
 - **Do** dê a cada cor do escudo o seu trabalho: verde para livre e reservar, amarelo para bloqueio e foco, vermelho para agora e apagar.
 - **Do** use `text-sobre-verde` em todo texto e ícone sobre preenchimento verde.
 - **Do** mantenha a ação mais comum a um toque e no alcance do polegar, com alvos de pelo menos 44px (linhas de 64px).
 - **Do** junte horas passadas livres numa linha tracejada curta em vez de listá-las uma a uma.
-- **Do** teste em 375px e nas duas marcas (`data-marca="krahe"` e `"neutra"`, esta no claro e no escuro).
+- **Do** teste em 375px, no app do Krahe e na demo (`NEXT_PUBLIC_MODO_DEMO=1`).
 
 ### Don't:
 - **Don't** crie tema claro para o Krahe nem deixe uma tela do Krahe seguir o tema do celular.
-- **Don't** traga o azul-noite da marca neutra para o Krahe, nem nome, logo, faixa ou cores do Krahe para a demo De Primeira.
+- **Don't** leve o nome ou o escudo do Krahe para a demo De Primeira.
 - **Don't** use as cores das faixas do escudo (`--escudo-*`) fora da faixa do cabeçalho.
 - **Don't** escreva cor fixa (`bg-black`, `text-white`, `#06210f`) em componente; use o token.
 - **Don't** separe superfícies com sombra; use o degrau de grafite ou a linha de 1px.

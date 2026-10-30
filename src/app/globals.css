@@ -2,21 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/*
- * Duas marcas (atributo data-marca no <html>, ver app/layout.tsx):
- * - krahe: preto do escudo do ginásio, sempre escuro. O "dark:" vale o tempo todo.
- * - neutra: a demonstração De Primeira; segue o tema do celular.
- */
-@custom-variant dark {
-  &:where([data-marca="krahe"] *) {
-    @slot;
-  }
-  @media (prefers-color-scheme: dark) {
-    &:where([data-marca="neutra"] *) {
-      @slot;
-    }
-  }
-}
+/* Sempre escuro, como o escudo do ginásio: o "dark:" vale o tempo todo (no Krahe e na demo). */
+@custom-variant dark (&:where(:root, :root *));
 
 @theme inline {
   --color-background: var(--background);
@@ -101,72 +88,6 @@
   --escudo-vermelho: #e3262b;
 }
 
-/* Demonstração De Primeira: concreto + azul-noite, claro de dia e escuro à noite. */
-[data-marca="neutra"] {
-  --background: #e8ecf0;
-  --foreground: #0f1b2d;
-  --card: #ffffff;
-  --card-foreground: #0f1b2d;
-  --popover: #ffffff;
-  --popover-foreground: #0f1b2d;
-  --primary: #0f1b2d;
-  --primary-foreground: #ffffff;
-  --secondary: #dce2e8;
-  --secondary-foreground: #0f1b2d;
-  --muted: #dce2e8;
-  --muted-foreground: #556275;
-  --accent: #dce2e8;
-  --accent-foreground: #0f1b2d;
-  --destructive: #c8281f;
-  --border: #c9d1db;
-  --input: #b9c3cf;
-  --ring: #0b7a41;
-
-  --livre: #0b7a41;
-  --livre-fundo: #d9f1e3;
-  --livre-tinta: #06512b;
-  --amarelo: #f2c200;
-  --amarelo-fundo: #fff3c4;
-  --amarelo-tinta: #5c4700;
-  --agora: #e0531f;
-  --whatsapp: #128c4b;
-  --destaque: var(--foreground);
-  --sobre-verde: #ffffff;
-}
-
-@media (prefers-color-scheme: dark) {
-  [data-marca="neutra"] {
-    --background: #0d1626;
-    --foreground: #e9eef5;
-    --card: #15213a;
-    --card-foreground: #e9eef5;
-    --popover: #15213a;
-    --popover-foreground: #e9eef5;
-    --primary: #e9eef5;
-    --primary-foreground: #0d1626;
-    --secondary: #1d2b47;
-    --secondary-foreground: #e9eef5;
-    --muted: #1d2b47;
-    --muted-foreground: #95a3b8;
-    --accent: #1d2b47;
-    --accent-foreground: #e9eef5;
-    --destructive: #f0605a;
-    --border: #26385a;
-    --input: #34496f;
-    --ring: #3dd68c;
-
-    --livre: #3dd68c;
-    --livre-fundo: #0f3222;
-    --livre-tinta: #b3f2cf;
-    --amarelo: #f2c200;
-    --amarelo-fundo: #3a3110;
-    --amarelo-tinta: #ffe58a;
-    --agora: #ff7a45;
-    --whatsapp: #3dd68c;
-    --sobre-verde: #06210f;
-  }
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -179,13 +100,10 @@
     @apply bg-background text-foreground;
     overscroll-behavior-y: none;
   }
-  /* Selects, barras de rolagem e campos nativos acompanham a marca. */
-  [data-marca="krahe"] {
+  /* Selects, barras de rolagem e campos nativos também no escuro. */
+  :root {
     color-scheme: dark;
     caret-color: var(--destaque);
-  }
-  [data-marca="neutra"] {
-    color-scheme: light dark;
   }
   ::selection {
     background: color-mix(in srgb, var(--destaque) 35%, transparent);
@@ -193,15 +111,11 @@
 }
 
 @layer components {
-  /* Cabeçalho das telas. No Krahe ele fecha com as três faixas do escudo (verde, amarelo, vermelho). */
+  /* Cabeçalho das telas: fecha com as três faixas do escudo (verde, amarelo, vermelho). */
   .cabecalho {
     position: relative;
-    border-bottom-width: 1px;
   }
-  [data-marca="krahe"] .cabecalho {
-    border-bottom-width: 0;
-  }
-  [data-marca="krahe"] .cabecalho::after {
+  .cabecalho::after {
     content: "";
     position: absolute;
     inset-inline: 0;
@@ -217,7 +131,7 @@
     );
   }
   /* Título da tela em caixa alta, como o "KRAHE" do escudo. */
-  [data-marca="krahe"] .titulo-tela {
+  .titulo-tela {
     text-transform: uppercase;
   }
 }
