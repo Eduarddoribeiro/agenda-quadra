@@ -14,9 +14,9 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#000000",
     theme_color: "#000000",
     icons: [
-      { src: "/icones/192.png", sizes: "192x192", type: "image/png" },
-      { src: "/icones/512.png", sizes: "512x512", type: "image/png" },
-      { src: "/icones/maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: `${marca.icones}/192.png`, sizes: "192x192", type: "image/png" },
+      { src: `${marca.icones}/512.png`, sizes: "512x512", type: "image/png" },
+      { src: `${marca.icones}/maskable.png`, sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
       { name: "Semana", url: "/semana" },

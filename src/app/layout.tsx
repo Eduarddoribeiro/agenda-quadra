@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   applicationName: marca.nome,
   appleWebApp: { capable: true, title: marca.nomeCurto, statusBarStyle: "black" },
   formatDetection: { telephone: false },
+  icons: { icon: `${marca.icones}/64.png`, apple: `${marca.icones}/180.png` },
 };
 
 export const viewport: Viewport = {

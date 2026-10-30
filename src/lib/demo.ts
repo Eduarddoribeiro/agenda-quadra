@@ -11,9 +11,12 @@ export const marca = modoDemo
       nome: "De Primeira",
       nomeCurto: "De Primeira",
       descricao: "Demonstração do De Primeira: a agenda da sua quadra no celular.",
+      icones: "/icones/demo",
     }
   : {
       nome: "Ginásio Krahe",
       nomeCurto: "Krahe",
       descricao: "Agenda da quadra do Ginásio Krahe.",
+      // Escudo do ginásio; a demo tem um ícone neutro.
+      icones: "/icones",
     };
