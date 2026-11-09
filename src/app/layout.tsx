@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo } from "next/font/google";
+import { AtualizarAoVoltar } from "@/components/atualizar-ao-voltar";
 import { RegistrarServiceWorker } from "@/components/registrar-sw";
 import { Toaster } from "@/components/ui/sonner";
 import { marca } from "@/lib/demo";
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <Toaster />
         <RegistrarServiceWorker />
+        <AtualizarAoVoltar />
       </body>
     </html>
   );
