@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Loader2, Phone, Repeat, UserRound } from "lucide-react";
+import { ArrowLeftRight, Loader2, Pencil, Phone, Repeat, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -42,6 +42,8 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
   const reserva = slot.reserva!;
   const [modo, setModo] = useState<Modo>("ver");
   const [observacoes, setObservacoes] = useState(reserva.observacoes ?? "");
+  // A observação aparece como texto; só vira campo quando o dono toca para editar.
+  const [editandoObs, setEditandoObs] = useState(false);
   const [pendente, startTransition] = useTransition();
 
   const dataLegivel = `${nomeDoDia(data)}, ${formatarData(data, "dd/MM")}`;
@@ -55,8 +57,9 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
   function salvarObservacoes() {
     startTransition(async () => {
       const r = await editarReserva(reserva.id, { observacoes });
-      if (r.ok) toast.success("Observação salva");
-      else toast.error(r.erro);
+      if (!r.ok) return void toast.error(r.erro);
+      toast.success("Observação salva");
+      setEditandoObs(false);
     });
   }
 
@@ -150,23 +153,51 @@ function DetalheReserva({ data, slot, livres, onFechar }: { data: DataISO; slot:
               </p>
             )}
 
-            <div className="mt-5 space-y-1.5">
-              <Label htmlFor="obs-detalhe">Observação</Label>
-              <Textarea
-                id="obs-detalhe"
-                value={observacoes}
-                onChange={(e) => setObservacoes(e.target.value)}
-                placeholder="Nada anotado"
-                rows={2}
-              />
-              {obsAlterada && (
+            <div className="mt-5">
+              {editandoObs ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="obs-detalhe">Observação</Label>
+                  <Textarea
+                    id="obs-detalhe"
+                    value={observacoes}
+                    onChange={(e) => setObservacoes(e.target.value)}
+                    placeholder="Ex.: traz a própria bola"
+                    rows={2}
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setObservacoes(reserva.observacoes ?? "");
+                        setEditandoObs(false);
+                      }}
+                      className="h-10 flex-1 rounded-full border text-sm font-semibold"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={salvarObservacoes}
+                      disabled={pendente || !obsAlterada}
+                      className="flex h-10 flex-1 items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                    >
+                      {pendente && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                      Salvar
+                    </button>
+                  </div>
+                </div>
+              ) : (
                 <button
                   type="button"
-                  onClick={salvarObservacoes}
-                  disabled={pendente}
-                  className="h-10 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                  onClick={() => setEditandoObs(true)}
+                  className={cn(
+                    "flex min-h-12 w-full items-center gap-3 rounded-xl px-4 py-2.5 text-left text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/60 active:bg-muted",
+                    observacoes ? "bg-card" : "border-2 border-dashed font-semibold text-muted-foreground",
+                  )}
                 >
-                  Salvar observação
+                  <span className="min-w-0 flex-1 whitespace-pre-line">{observacoes || "Adicionar observação"}</span>
+                  <Pencil className="size-4 shrink-0 text-muted-foreground" aria-label={observacoes ? "Editar observação" : undefined} />
                 </button>
               )}
             </div>

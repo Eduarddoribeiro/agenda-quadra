@@ -7,27 +7,28 @@ O mesmo sistema é oferecido para outras quadras com o nome **De Primeira**.
 **[Abrir a demonstração](https://deprimeira-demo.vercel.app)**: quadra de exemplo, sem login. Os dados voltam ao exemplo a cada hora.
 
 <p align="center">
-  <img src="docs/imagens/hoje.png" width="240" alt="Tela Hoje: horários do dia, livres em verde com botão Reservar">
-  <img src="docs/imagens/reservar.png" width="240" alt="Reservar: escolher o cliente ou cadastrar um novo">
-  <img src="docs/imagens/semana.png" width="240" alt="Semana: ocupação de cada dia em barrinhas">
+  <img src="docs/imagens/hoje.png" width="240" alt="Tela Hoje: o que já passou numa linha só, o jogo em andamento e os próximos horários">
+  <img src="docs/imagens/reservar.png" width="240" alt="Reservar: duração em um toque, clientes frequentes e busca">
+  <img src="docs/imagens/semana.png" width="240" alt="Semana: legenda no topo e a ocupação dos sete dias numa tela">
 </p>
 
 ## O que ele faz
 
-- **Hoje**: os horários do dia em ordem. Livre aparece em verde com o botão **Reservar**; ocupado mostra o cliente e um atalho para o WhatsApp dele. Uma linha vermelha marca a hora atual, e os horários que já passaram livres ficam agrupados numa linha só.
-- **Reservar em três toques**: tocar no horário, escolher o cliente (busca por nome ou telefone, lista de A a Z) ou cadastrar na hora, confirmar.
-- **Jogo fora da hora cheia**: dá para mudar início e fim de 30 em 30 minutos, como a escola de vôlei das 14h30 às 16h. O jogo ocupa uma linha só.
+- **Hoje**: abre já no que interessa. Tudo o que passou (jogos e horas vazias) vira uma linha só no topo, que abre se tocar; o jogo em andamento ganha borda vermelha e "Em jogo até 19h". Livre aparece em verde com um **+**; ocupado mostra o cliente, o selo **Fixo** quando joga toda semana e o atalho para o WhatsApp. A faixa da semana mostra a ocupação de cada dia em miniatura.
+- **Botão Reservar no meio da barra**: de qualquer tela, abre a gaveta no próximo horário livre (hoje ou nos próximos 14 dias).
+- **Reservar em três toques**: tocar no horário, escolher o cliente (os que mais jogam aparecem primeiro, ou busca por nome ou telefone) ou cadastrar na hora, confirmar. A duração vem em um toque (1h, 1h30, 2h) e o botão diz o que vai acontecer: "Reservar 20h para Rafael".
+- **Jogo fora da hora cheia**: em "Outro horário" dá para mudar início e fim de 30 em 30 minutos, como a escola de vôlei das 14h30 às 16h. O jogo ocupa uma linha só.
 - **Horários fixos**: escolinhas e grupos que jogam toda semana no mesmo horário entram uma vez e aparecem sozinhos nas semanas seguintes.
-- **Semana**: a ocupação de cada dia em barrinhas (livre, reservado, bloqueado, já passou). Tocar no dia abre a agenda dele.
+- **Semana**: a ocupação dos sete dias numa tela, com a legenda no topo (livre, reservado, bloqueado, já passou). Tocar no dia abre a agenda dele.
 - **Clientes**: busca, histórico de jogos e cancelamentos, e o botão de WhatsApp. Deslizar para a esquerda apaga, com alguns segundos para desfazer. Nome repetido (ignorando acento e maiúscula) reaproveita o cadastro que já existe.
-- **Ajustes**: horário de funcionamento por dia, com mais de um período quando precisa (ex.: 08h–18h e 18h30–22h30), e bloqueios para manutenção, feriado ou evento.
+- **Ajustes**: um horário padrão para a semana, os dias abertos em um toque e só os dias diferentes à parte (ex.: domingo até 18h), com mais de um período quando precisa (ex.: 08h–18h e 18h30–22h30). Mais os bloqueios para manutenção, feriado ou evento.
 - **Compartilhar horários livres**: gera o texto pronto para colar no WhatsApp, do dia ou da semana.
 - **Instala como app** (PWA) na tela inicial do celular e funciona com uma mão.
 
 <p align="center">
   <img src="docs/imagens/clientes.png" width="240" alt="Lista de clientes em ordem alfabética">
   <img src="docs/imagens/ficha-cliente.png" width="240" alt="Ficha do cliente com próximos jogos">
-  <img src="docs/imagens/ajustes.png" width="240" alt="Ajustes: horário de funcionamento por dia">
+  <img src="docs/imagens/ajustes.png" width="240" alt="Ajustes: horário padrão, dias abertos e dias com horário diferente">
 </p>
 
 <sub>Prints com dados fictícios.</sub>

@@ -30,6 +30,13 @@ export async function pesquisarClientes(termo: string): Promise<ClienteResumo[]>
   return buscarClientes(termo, termo.trim() ? 8 : 200, "alfabetica");
 }
 
+/** Quem mais joga, para escolher com um toque na gaveta de reservar. */
+export async function clientesFrequentes(): Promise<ClienteResumo[]> {
+  await exigirUsuario();
+  const lista = await buscarClientes("", 6, "frequentes");
+  return lista.filter((c) => c.totalReservas > 0);
+}
+
 /** Se já existe cliente com o mesmo nome, devolve ele (`existente`) em vez de repetir o cadastro. */
 export async function criarCliente(dados: DadosCliente): Promise<Resultado<{ id: string; existente: boolean }>> {
   await exigirUsuario();

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Clock, Loader2, Repeat, Search, UserPlus, X } from "lucide-react";
+import { Check, Loader2, Repeat, Search, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { diaDaSemana, formatarData, minutosDoHorario, nomeDoDia, rotuloHorario } from "@/lib/datas";
 import { formatarTelefone } from "@/lib/telefone";
 import { cn } from "@/lib/utils";
-import { pesquisarClientes } from "@/modules/clientes/acoes";
+import { clientesFrequentes, pesquisarClientes } from "@/modules/clientes/acoes";
 import type { ClienteResumo } from "@/modules/clientes/consultas";
 import { chaveDoNome } from "@/modules/clientes/nomes";
 import { criarReserva } from "../acoes";
@@ -42,6 +42,22 @@ function periodoDoSlot(dia: AgendaDia, slot: Slot): { abertura: number; fechamen
   return periodo ?? { abertura: slot.minuto, fechamento: slot.minuto + DURACAO_SLOT };
 }
 
+/** Durações mais pedidas, um toque cada. */
+const DURACOES = [60, 90, 120];
+
+function rotuloDuracao(minutos: number) {
+  const h = Math.floor(minutos / 60);
+  return minutos % 60 ? `${h}h${minutos % 60}` : `${h}h`;
+}
+
+/** Iniciais para a bolinha do cliente: "Pelada da Firma" → "PF", "Escolinha Sub-15" → "ES". */
+function iniciais(nome: string) {
+  const palavras = nome.split(/\s+/).filter((p) => /^[\p{L}\d]/u.test(p) && !/^(da|de|do|das|dos|e)$/i.test(p));
+  return ((palavras[0]?.[0] ?? "") + (palavras[1]?.[0] ?? "")).toUpperCase();
+}
+
+const primeiroNome = (nome: string) => nome.trim().split(/\s+/)[0];
+
 /** De 30 em 30 minutos, de `de` até `ate` (inclusive). */
 function passos(de: number, ate: number): number[] {
   const lista: number[] = [];
@@ -53,6 +69,7 @@ function FormularioReserva({ dia, slot, onFechar }: { dia: AgendaDia; slot: Slot
   const data = dia.data;
   const [termo, setTermo] = useState("");
   const [resultados, setResultados] = useState<ClienteResumo[] | null>(null);
+  const [frequentes, setFrequentes] = useState<ClienteResumo[]>([]);
   const [selecionado, setSelecionado] = useState<ClienteResumo | null>(null);
   const [cadastrando, setCadastrando] = useState(false);
   const [novoNome, setNovoNome] = useState("");
@@ -76,6 +93,14 @@ function FormularioReserva({ dia, slot, onFechar }: { dia: AgendaDia; slot: Slot
   const [buscando, startBusca] = useTransition();
   const [salvando, startSalvar] = useTransition();
 
+  useEffect(() => {
+    let ativo = true;
+    clientesFrequentes().then((lista) => ativo && setFrequentes(lista));
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
   // Busca com pequeno atraso enquanto digita; sem termo, mostra todos os clientes de A a Z.
   useEffect(() => {
     if (selecionado || cadastrando) return;
@@ -86,6 +111,15 @@ function FormularioReserva({ dia, slot, onFechar }: { dia: AgendaDia; slot: Slot
   }, [termo, selecionado, cadastrando]);
 
   const podeConfirmar = !conflito && (selecionado !== null || (cadastrando && novoNome.trim().length >= 2));
+  // O botão diz o que vai acontecer, ou o que ainda falta para poder confirmar.
+  const nomeEscolhido = selecionado?.nome ?? (cadastrando ? novoNome.trim() : "");
+  const rotuloConfirmar = conflito
+    ? "Horário ocupado"
+    : !selecionado && !cadastrando
+      ? "Escolha um cliente"
+      : cadastrando && novoNome.trim().length < 2
+        ? "Digite o nome do cliente"
+        : `${repetir ? "Fixar" : "Reservar"} ${rotuloHorario(inicio)} para ${primeiroNome(nomeEscolhido)}`;
   // Já tem cliente com esse nome: escolher ele em vez de cadastrar de novo.
   const mesmoNome = termo.trim() ? resultados?.find((c) => chaveDoNome(c.nome) === chaveDoNome(termo)) : undefined;
 
@@ -153,16 +187,43 @@ function FormularioReserva({ dia, slot, onFechar }: { dia: AgendaDia; slot: Slot
               {nomeDoDia(data)}, {formatarData(data, "d 'de' MMMM")}
             </DrawerDescription>
           </div>
-          {!mudandoHorario && (
-            <button
-              type="button"
-              onClick={() => setMudandoHorario(true)}
-              className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/60"
-            >
-              <Clock className="size-4" aria-hidden />
-              Mudar horário
-            </button>
-          )}
+        </div>
+
+        {/* Duração em um toque; "Outro" abre início e fim de 30 em 30 minutos */}
+        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Duração do jogo">
+          {DURACOES.map((d) => {
+            const ativo = !mudandoHorario && fim - inicio === d;
+            // Não oferece duração que passa do fechamento ou bate em outro jogo/bloqueio.
+            const cabe =
+              inicio + d <= periodo.fechamento &&
+              !conflitoNoIntervalo(dia.slots, { inicio: instanteDoMinuto(data, inicio), fim: instanteDoMinuto(data, inicio + d) });
+            return (
+              <button
+                key={d}
+                type="button"
+                disabled={!cabe}
+                aria-pressed={ativo}
+                onClick={() => setFim(inicio + d)}
+                className={cn(
+                  "h-10 min-w-14 rounded-full border px-4 text-sm font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/60 disabled:opacity-30",
+                  ativo ? "border-foreground bg-primary text-primary-foreground" : "border-input",
+                )}
+              >
+                {rotuloDuracao(d)}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            aria-pressed={mudandoHorario}
+            onClick={() => setMudandoHorario((v) => !v)}
+            className={cn(
+              "h-10 rounded-full border px-4 text-sm font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/60",
+              mudandoHorario ? "border-foreground bg-primary text-primary-foreground" : "border-input",
+            )}
+          >
+            Outro horário
+          </button>
         </div>
 
         {mudandoHorario && (
@@ -197,14 +258,14 @@ function FormularioReserva({ dia, slot, onFechar }: { dia: AgendaDia; slot: Slot
                 ))}
               </select>
             </div>
-            {conflito && (
-              <p role="alert" className="col-span-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
-                {conflito.estado === "bloqueado"
-                  ? `Choca com o bloqueio: ${conflito.bloqueio?.motivo}.`
-                  : `Choca com ${conflito.reserva?.clienteNome}, que já tem parte desse horário.`}
-              </p>
-            )}
           </div>
+        )}
+        {conflito && (
+          <p role="alert" className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
+            {conflito.estado === "bloqueado"
+              ? `Choca com o bloqueio: ${conflito.bloqueio?.motivo}.`
+              : `Choca com ${conflito.reserva?.clienteNome}, que já tem parte desse horário.`}
+          </p>
         )}
       </header>
 
@@ -263,6 +324,27 @@ function FormularioReserva({ dia, slot, onFechar }: { dia: AgendaDia; slot: Slot
           </div>
         ) : (
           <div>
+            {!termo && frequentes.length >= 2 && (
+              <div className="mb-3">
+                <p className="pb-2 text-xs text-muted-foreground">Frequentes</p>
+                <ul className="-mx-5 flex gap-1 overflow-x-auto px-4 pb-1" aria-label="Clientes frequentes">
+                  {frequentes.map((c) => (
+                    <li key={c.id} className="shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setSelecionado(c)}
+                        className="flex w-17 flex-col items-center gap-1 rounded-xl py-1 text-center outline-none focus-visible:ring-3 focus-visible:ring-ring/60 active:bg-muted"
+                      >
+                        <span aria-hidden className="font-placar grid size-12 place-items-center rounded-full bg-secondary text-lg">
+                          {iniciais(c.nome)}
+                        </span>
+                        <span className="line-clamp-2 text-[11px] leading-tight">{c.nome}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="relative">
               <Search className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden />
               <Input
@@ -385,7 +467,7 @@ function FormularioReserva({ dia, slot, onFechar }: { dia: AgendaDia; slot: Slot
           )}
         >
           {salvando && <Loader2 className="size-5 animate-spin" aria-hidden />}
-          {repetir ? "Confirmar horário fixo" : "Confirmar reserva"}
+          <span className="truncate">{rotuloConfirmar}</span>
         </button>
       </footer>
     </div>

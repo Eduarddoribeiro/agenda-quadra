@@ -73,8 +73,12 @@ components:
     backgroundColor: "{colors.verde-livre}"
     textColor: "{colors.sobre-verde}"
     rounded: "{rounded.pilula}"
-    padding: "0 20px"
-    height: "48px"
+    size: "40px"
+  botao-reservar-barra:
+    backgroundColor: "{colors.verde-livre}"
+    textColor: "{colors.sobre-verde}"
+    rounded: "{rounded.pilula}"
+    size: "56px"
   botao-confirmar:
     backgroundColor: "{colors.verde-livre}"
     textColor: "{colors.sobre-verde}"
@@ -96,22 +100,22 @@ components:
     backgroundColor: "{colors.verde-livre-fundo}"
     textColor: "{colors.verde-livre-tinta}"
     rounded: "{rounded.xl}"
-    height: "64px"
+    height: "52px"
   linha-reservada:
     backgroundColor: "{colors.cartao-grafite}"
     textColor: "{colors.letra-branca}"
     rounded: "{rounded.xl}"
-    height: "64px"
+    height: "52px"
   linha-bloqueada:
     backgroundColor: "{colors.amarelo-cartao-fundo}"
     textColor: "{colors.amarelo-cartao-tinta}"
     rounded: "{rounded.xl}"
-    height: "64px"
+    height: "52px"
   dia-semana-selecionado:
     backgroundColor: "{colors.letra-branca}"
     textColor: "{colors.chao-escudo}"
     rounded: "{rounded.lg}"
-    height: "52px"
+    height: "56px"
   campo:
     backgroundColor: "{colors.cartao-grafite}"
     textColor: "{colors.letra-branca}"
@@ -124,6 +128,9 @@ components:
     height: "64px"
   barra-navegacao-ativo:
     textColor: "{colors.letra-branca}"
+  escudo-cabecalho:
+    rounded: "{rounded.pilula}"
+    size: "44px"
 ---
 
 # Design System: Agenda do Krahe
@@ -136,7 +143,7 @@ A agenda veste o escudo do Ginásio do Krahe (`marca/logo-ginasio-krahe.png`): c
 
 O app é **sempre escuro**, de dia e de noite: a variante `dark:` vale o tempo todo, `color-scheme: dark` acompanha os controles nativos e o `theme-color` é `#000000`. A demonstração De Primeira usa o mesmo visual (paleta, faixa tricolor, caixa alta); só o nome e o escudo do Krahe ficam de fora, decididos por `modoDemo` (`src/lib/demo.ts`).
 
-É um app de operação, de uma mão, em ~375px. O mundo empresta paleta, tipo e um gesto assinatura (a faixa tricolor fechando o cabeçalho); navegação inferior, gavetas e controles seguem padrões conhecidos. Densidade média: uma linha de horário por toque, com alvos de 44 a 64px.
+É um app de operação, de uma mão, em ~375px. O mundo empresta paleta, tipo e um gesto assinatura (a faixa tricolor fechando o cabeçalho); navegação inferior, gavetas e controles seguem padrões conhecidos. Densidade média: uma linha de horário por toque, com alvos de 44 a 56px; no iPhone 13 cabem cerca de oito horários por tela.
 
 **Key Characteristics:**
 - Chão preto puro, cartões grafite, profundidade por camadas de tom e não por sombra.
@@ -144,6 +151,7 @@ O app é **sempre escuro**, de dia e de noite: a variante `dark:` vale o tempo t
 - Uma família só (Archivo variável): o eixo `wdth` faz os numerais de placar (62) e o texto corrido.
 - Faixa tricolor do escudo de 3px fechando o cabeçalho de toda tela do Krahe.
 - Pílulas para ações, cantos arredondados de ~17px para as linhas da agenda.
+- O escudo fica no cabeçalho, ao lado do título; o centro da barra é o botão verde de reservar.
 
 ## Colors
 
@@ -166,7 +174,7 @@ Preto do escudo com três cores de sinal, cada uma com um só trabalho. Os token
 
 ### Neutral
 - **Chão do Escudo** (`--background`): fundo de todas as telas e do cabeçalho fixo.
-- **Letra Branca** (`--foreground`, `--primary`): texto, numerais, botão principal em pílula branca, dia selecionado na faixa da semana, células reservadas da Semana.
+- **Letra Branca** (`--foreground`, `--primary`): texto, numerais, botão principal em pílula branca, dia selecionado na faixa da semana. Na Semana, reservado é a letra branca a 45% (cinza), para o branco cheio marcar só o dia de hoje.
 - **Cartão Grafite** (`--card`) e **Gaveta Grafite** (`--popover`): linhas reservadas, listas, botões redondos, barra de navegação (a 85-95% com blur) e gavetas.
 - **Grafite Secundário / Apagado** (`--secondary`, `--muted`, `--accent`): estados pressionados, caixas informativas, trilho do interruptor.
 - **Cinza Legenda** (`--muted-foreground`): datas sob o título, telefones, legendas, horas que já passaram.
@@ -189,8 +197,8 @@ Preto do escudo com três cores de sinal, cada uma com um só trabalho. Os token
 **Character:** Uma família só faz as duas vozes: o placar estreito e pesado dos horários e títulos, e o texto corrido simples e legível do balcão.
 
 ### Hierarchy
-- **Display** (800, 3.25rem, 0.85, wdth 62, caixa alta no Krahe): o título da tela ("HOJE", "SEMANA", "CLIENTES"). O nome de outro dia cai para 2.75rem para caber ao lado das setas. Na tela Entrar, 2.5rem.
-- **Headline** (800, 2.75rem, 0.9, wdth 62, numerais tabulares): o numeral do horário em cada linha da agenda, com o sufixo "h" ou "h30" a 0.36em, em negrito, alinhado no topo. Variações do mesmo placar: 2.25rem para o dia na Semana, 2rem no título da gaveta Reservar, 3rem no horário da gaveta da reserva, 1.5rem para o total de livres.
+- **Display** (800, 2.25rem, 0.85, wdth 62, caixa alta no Krahe): o título da tela ("HOJE", "SEMANA", "CLIENTES"), na mesma linha do escudo e das setas, para a agenda começar mais cedo na tela. Na tela Entrar, 2.5rem.
+- **Headline** (800, 2.25rem, 0.9, wdth 62, numerais tabulares): o numeral do horário em cada linha da agenda, com o sufixo "h" ou "h30" a 0.36em, em negrito, alinhado no topo. Variações do mesmo placar: 1.5rem para o dia na Semana, 2rem no título da gaveta Reservar, 3rem no horário da gaveta da reserva, 1.25rem para o total de livres.
 - **Title** (700, 1rem): nome do cliente na linha reservada, "Livre", títulos de bloco nas gavetas; o nome do cliente no topo da gaveta sobe para 1.5rem extrabold.
 - **Body** (400, 0.875rem): resumo do dia, descrições, mensagens. Campos usam 1rem para o celular não dar zoom.
 - **Label** (400-700, 0.75rem): telefone, "até 16h", rótulos da navegação, legenda da Semana, dias da faixa da semana.
@@ -202,9 +210,9 @@ Preto do escudo com três cores de sinal, cada uma com um só trabalho. Os token
 
 ## Layout
 
-Coluna única para o polegar, centrada em `max-w-md` (28rem), com margem lateral de 16px. Cabeçalho fixo no topo (`sticky`, fundo preto) com título à esquerda e controles redondos de 44px à direita, e logo abaixo a faixa da semana em 7 colunas (botões de 52px de altura, 4px de vão). A barra de navegação inferior é fixa, 4 colunas de 64px, respeitando a área segura (`pb-seguro`).
+Coluna única para o polegar, centrada em `max-w-md` (28rem), com margem lateral de 16px. Cabeçalho fixo no topo (`sticky`, fundo preto) numa linha só: escudo de 44px, título com a data embaixo e controles redondos de 44px à direita; logo abaixo, na tela do dia, a faixa da semana em 7 colunas (botões de 56px de altura, 4px de vão). A barra de navegação inferior é fixa, 5 colunas de 64px com o botão Reservar no meio, respeitando a área segura (`pb-seguro`).
 
-A agenda do dia é uma grade de duas colunas: 4.25rem para o numeral e o resto para a linha, com 8px de vão e 10px entre linhas. Linhas têm no mínimo 64px. Horas passadas que ficaram livres se juntam numa linha curta tracejada de 44px, para o dono não rolar por horas mortas. A Semana usa linhas de 72px em grade de três colunas (3.5rem dia, barra de ocupação, 4.25rem contagem), com células de ocupação de 36px de altura e 3px de vão, uma coluna a cada 30 minutos.
+A agenda do dia é uma grade de duas colunas: 3.5rem para o numeral e o resto para a linha, com 8px de vão e 8px entre linhas. Linhas têm no mínimo 52px. Hoje, tudo o que já terminou (jogos e horas vazias) vira uma linha tracejada de 44px no topo ("08h às 18h · 2 jogos, 8 ficaram livres"), que abre ao tocar; em outros dias, só as horas passadas livres se juntam. A Semana usa linhas de 48px em grade de três colunas (2.75rem dia, barra de ocupação, 3rem contagem), com células de 24px de altura e 3px de vão, uma coluna a cada 30 minutos, a régua com marcas a cada 3 horas alinhadas às colunas e a legenda acima das barras: os sete dias cabem numa tela.
 
 Gavetas sobem de baixo, até `100dvh - 6rem`, com 20px de margem interna e o botão de confirmar fixo no rodapé, separado por uma linha. Deslizar para os lados troca de dia (o conteúdo acompanha o dedo a 35%).
 
@@ -221,22 +229,25 @@ Plano. A profundidade vem de camadas de tom sobre o preto: chão `--background`,
 
 ## Shapes
 
-Duas famílias de forma. Ações são pílulas (`rounded-full`): Reservar, Confirmar, botão principal, setas redondas de 44px, Compartilhar livres. Superfícies da agenda são retângulos de canto macio: linhas de horário e cartões em `rounded-xl` (1.05rem), campos e dias da faixa em `rounded-lg` (0.75rem), estados vazios em `rounded-2xl` (1.35rem) com contorno tracejado de 2px. As células da Semana e as amostras da legenda têm canto de 3px, como pastilhas de placar. O tracejado significa "nada aqui": hora que passou livre, quadra fechada, cadastrar cliente novo.
+Duas famílias de forma. Ações são pílulas (`rounded-full`): Reservar, Confirmar, botão principal, setas redondas de 44px, Compartilhar livres, chips de duração. Superfícies da agenda são retângulos de canto macio: linhas de horário e cartões em `rounded-xl` (1.05rem), campos e dias da faixa em `rounded-lg` (0.75rem), estados vazios em `rounded-2xl` (1.35rem) com contorno tracejado de 2px. As células da Semana e as amostras da legenda têm canto de 3px, como pastilhas de placar. O tracejado significa "nada aqui": hora que passou livre, quadra fechada, cadastrar cliente novo.
 
 ## Components
 
 ### Buttons
 - **Shape:** pílula (`rounded-full`).
-- **Reservar:** dentro da linha livre, `--livre` com texto `--sobre-verde`, 48px de altura, 20px laterais, ícone de mais em traço 2.75 e rótulo 15px negrito.
-- **Confirmar:** largura total, 56px, `--livre`, 16px negrito, no rodapé da gaveta; desabilitado a 40%.
+- **Reservar (linha):** círculo de 40px em `--livre` com o mais em `--sobre-verde` (traço 2.75) à direita da linha livre. A linha inteira é o botão; o "Reservar" fica só para leitor de tela, para não repetir a palavra em cada hora livre.
+- **Reservar (barra):** círculo de 56px em `--livre` no meio da barra de navegação, saltando 24px acima dela com um anel de 5px do fundo, rótulo "Reservar" em verde. Abre a gaveta no próximo horário livre.
+- **Confirmar:** largura total, 56px, `--livre`, 16px negrito, no rodapé da gaveta. O rótulo diz o que vai acontecer ("Reservar 20h para Rafael", "Fixar 20h para Rafael") ou o que falta ("Escolha um cliente", "Horário ocupado"); desabilitado a 40%.
+- **Chip:** pílula de 40px com contorno `--input`, 14px negrito; escolhido vira branco com texto preto (durações 1h, 1h30, 2h e "Outro horário" na gaveta Reservar). Duração que bate em outro jogo ou passa do fechamento fica desabilitada.
 - **Principal:** pílula branca (`--primary`) com texto preto, 44px, 14px negrito: "Hoje" quando se está em outro dia, "Novo cliente", "Ajustar horários".
 - **Redondo:** 44px, `--card` com contorno, setas de dia anterior/próximo.
-- **Contorno:** pílula com `--border` sobre o fundo, 40px, 14px seminegrito (Compartilhar livres, ajustar horário na gaveta).
+- **Compartilhar:** botão redondo de 44px igual às setas, só com o ícone (o nome fica no `aria-label`), ao lado do resumo do dia ou da semana.
 - **Focus:** anel de 3px em `--ring` (amarelo) a 60%. **Pressionado:** `active:bg-muted` ou leve encolhimento (`scale(0.985)`) na linha livre.
 
 ### Linhas da agenda (componente assinatura)
-- **Livre:** linha inteira tocável em `--livre-fundo`, "Livre" e "até 16h" em `--livre-tinta`, botão Reservar à direita.
-- **Reservada:** `--card` com contorno, nome do cliente em negrito, telefone ou observação em cinza, ícone de repetir quando é horário fixo; à direita, uma coluna de 56px separada por linha com o WhatsApp. Jogo fora da grade mostra "14h30 às 16h" em negrito antes do telefone.
+- **Livre:** linha inteira tocável em `--livre-fundo`, "Livre" e "até 16h" na mesma linha em `--livre-tinta`, o círculo de mais à direita.
+- **Reservada:** `--card` com contorno, nome do cliente em negrito, selo "FIXO" (pílula de contorno, 10px) quando é horário fixo, telefone ou observação em cinza; à direita, uma coluna de 52px separada por linha com o WhatsApp. Jogo fora da grade mostra "14h30 às 16h" em negrito antes do telefone.
+- **Em jogo:** a reservada que está acontecendo ganha contorno `--agora` a 70% e "Em jogo até 19h" em vermelho negrito antes do telefone.
 - **Bloqueada:** `--amarelo-fundo` com o cartão amarelo de árbitro (16x24px, girado -12°) e o motivo.
 - **Passada:** a 60% de opacidade; numeral em cinza.
 - **Agora:** uma linha vermelha de 2px atravessa a agenda com o rótulo "agora", e o numeral fica `--agora`.
@@ -258,10 +269,13 @@ Duas famílias de forma. Ações são pílulas (`rounded-full`): Reservar, Confi
 - **Interruptor:** trilho de 28x48px em `--muted`, bolinha branca de 20px.
 
 ### Navigation
-Barra inferior de 4 itens (Hoje, Semana, Clientes, Ajustes), ícones de 24px e rótulo de 12px. Inativo em `--muted-foreground` com traço 1.8; ativo em `--foreground`, negrito, traço 2.4 e uma linha de quadra de 3x40px em `--destaque` no topo. O ícone de Hoje é um calendarinho com o número do dia. Foco pinta o fundo de `--muted`.
+Barra inferior de 4 itens (Hoje, Semana, Clientes, Ajustes) com o botão Reservar no meio, ícones de 24px e rótulo de 12px. Inativo em `--muted-foreground` com traço 1.8; ativo em `--foreground`, negrito, traço 2.4 e uma linha de quadra de 3x40px em `--destaque` no topo. O ícone de Hoje é um calendarinho com o número do dia. Foco pinta o fundo de `--muted`.
 
 ### Faixa da semana
-Sete dias sob o título; o selecionado vira bloco branco com texto preto, hoje (quando não selecionado) leva um ponto vermelho de 4px, dias passados ficam em cinza.
+Sete dias sob o título; o selecionado vira bloco branco com texto preto, hoje aparece escrito "hoje" (em vermelho quando não selecionado), dias passados ficam em cinza. Sob cada número, um mini placar de 4px com uma pastilha por horário (verde livre, cinza reservado, amarelo bloqueado, apagado já passou), para ver de longe quais dias ainda têm vaga.
+
+### Escudo no cabeçalho
+O escudo do Krahe em círculo de 44px com contorno `--border` abre o cabeçalho de toda tela principal, à esquerda do título. A demo não mostra (`modoDemo`).
 
 ### Faixa tricolor do cabeçalho
 O `.cabecalho` fecha embaixo com 3px divididos em terços: `--escudo-verde`, `--escudo-amarelo`, `--escudo-vermelho`, com 2px de preto entre eles.
@@ -275,7 +289,7 @@ Sobem de baixo em `--popover`, canto superior de 1.05rem, com alça de arrastar.
 - **Do** use `.cabecalho` e `.titulo-tela font-placar` em toda tela nova do app; a faixa tricolor e a caixa alta aparecem sozinhas.
 - **Do** dê a cada cor do escudo o seu trabalho: verde para livre e reservar, amarelo para bloqueio e foco, vermelho para agora e apagar.
 - **Do** use `text-sobre-verde` em todo texto e ícone sobre preenchimento verde.
-- **Do** mantenha a ação mais comum a um toque e no alcance do polegar, com alvos de pelo menos 44px (linhas de 64px).
+- **Do** mantenha a ação mais comum a um toque e no alcance do polegar, com alvos de pelo menos 44px (linhas de 52px, Reservar no meio da barra).
 - **Do** junte horas passadas livres numa linha tracejada curta em vez de listá-las uma a uma.
 - **Do** teste em 375px, no app do Krahe e na demo (`NEXT_PUBLIC_MODO_DEMO=1`).
 

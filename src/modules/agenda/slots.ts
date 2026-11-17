@@ -130,3 +130,38 @@ export function juntarPassadosLivres(linhas: Slot[]): (Slot | PassadosLivres)[] 
 export function conflitoNoIntervalo(slots: Slot[], intervalo: Intervalo): Slot | undefined {
   return slots.find((s) => s.estado !== "livre" && sobrepoe(s.reserva ?? s.bloqueio ?? s, intervalo));
 }
+
+/** O que já passou no dia, para virar uma linha só no topo da tela de hoje. */
+export type ResumoPassados = {
+  /** Linhas que já terminaram, em ordem (as linhas de um dia vêm sempre em ordem). */
+  linhas: Slot[];
+  /** Minuto de início da primeira e de fim da última. */
+  de: number;
+  ate: number;
+  jogos: number;
+  livres: number;
+};
+
+/** Separa as linhas que já terminaram das que ainda servem (a que está acontecendo fica no resto). */
+export function separarPassados(linhas: Slot[]): { passados: ResumoPassados | null; resto: Slot[] } {
+  const corte = linhas.findIndex((s) => !s.passado);
+  const fim = corte === -1 ? linhas.length : corte;
+  const passadas = linhas.slice(0, fim);
+  if (!passadas.length) return { passados: null, resto: linhas };
+  const ultima = passadas.at(-1)!;
+  return {
+    passados: {
+      linhas: passadas,
+      de: passadas[0].minuto,
+      ate: ultima.reserva ? minutoDoDia(ultima, ultima.reserva.fim) : ultima.minuto + DURACAO_SLOT,
+      jogos: passadas.filter((s) => s.estado === "reservado").length,
+      livres: passadas.filter((s) => s.estado === "livre").length,
+    },
+    resto: linhas.slice(fim),
+  };
+}
+
+/** Minuto do dia de um instante, tomando o slot como referência (aceita passar da meia-noite). */
+function minutoDoDia(slot: Slot, instante: Date): number {
+  return slot.minuto + Math.round((instante.getTime() - slot.inicio.getTime()) / 60000);
+}

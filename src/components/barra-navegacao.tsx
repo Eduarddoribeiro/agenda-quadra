@@ -1,14 +1,11 @@
 "use client";
 
-import { CalendarRange, Settings2, Users } from "lucide-react";
-import Image from "next/image";
+import { CalendarRange, Plus, Settings2, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
 import { hojeSP } from "@/lib/datas";
-import { modoDemo } from "@/lib/demo";
-import logo from "@/app/entrar/logo.webp";
 
 const ITENS = [
   { href: "/", rotulo: "Hoje", icone: null },
@@ -37,26 +34,35 @@ export function BarraNavegacao() {
   return <BarraNavegacaoBase pathname={usePathname()} />;
 }
 
-/** Escudo do ginásio no meio da barra, saltando um pouco acima dela. A demo não leva a marca do Krahe. */
-function Escudo() {
+/**
+ * Botão do meio da barra, no lugar mais fácil para o polegar: abre a gaveta de reservar
+ * já no próximo horário livre (hoje ou nos dias seguintes), de qualquer tela.
+ */
+function BotaoReservar() {
   return (
-    <li aria-hidden className="relative flex justify-center">
-      <span className="absolute -top-4 size-[4.5rem] overflow-hidden rounded-full border-t bg-black">
-        <Image src={logo} alt="" sizes="72px" className="size-full scale-[1.15] object-cover" />
-      </span>
+    <li className="relative flex justify-center">
+      <Link
+        href="/?reservar=1"
+        scroll={false}
+        className="group flex flex-col items-center gap-1 text-xs font-bold text-livre outline-none"
+      >
+        <span className="-mt-6 grid size-14 place-items-center rounded-full bg-livre text-sobre-verde ring-[5px] ring-background transition-transform group-active:scale-95 group-focus-visible:ring-ring/60">
+          <Plus className="size-7" strokeWidth={2.75} aria-hidden />
+        </span>
+        Reservar
+      </Link>
     </li>
   );
 }
 
 /** Versão sem hook: serve de fallback do Suspense enquanto a rota atual não é conhecida. */
 export function BarraNavegacaoBase({ pathname }: { pathname: string | null }) {
-
   return (
     <nav
       aria-label="Principal"
       className="pb-seguro fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/85"
     >
-      <ul className={cn("mx-auto grid max-w-md", modoDemo ? "grid-cols-4" : "grid-cols-5")}>
+      <ul className="mx-auto grid max-w-md grid-cols-5">
         {ITENS.flatMap(({ href, rotulo, icone: Icone }, i) => {
           const ativo = pathname !== null && (href === "/" ? pathname === "/" : pathname.startsWith(href));
           const item = (
@@ -82,7 +88,7 @@ export function BarraNavegacaoBase({ pathname }: { pathname: string | null }) {
               </Link>
             </li>
           );
-          return i === 2 && !modoDemo ? [<Escudo key="escudo" />, item] : [item];
+          return i === 2 ? [<BotaoReservar key="reservar" />, item] : [item];
         })}
       </ul>
     </nav>

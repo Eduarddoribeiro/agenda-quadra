@@ -125,11 +125,11 @@ export function FichaCliente({
         {/* Placar do cliente */}
         <dl className="mt-5 grid grid-cols-3 divide-x rounded-xl border bg-card text-center">
           <div className="py-3">
-            <dt className="text-xs text-muted-foreground">Jogou</dt>
+            <dt className="text-xs text-muted-foreground">Jogos feitos</dt>
             <dd className="font-placar mt-1 text-[2rem]">{jogados}</dd>
           </div>
           <div className="py-3">
-            <dt className="text-xs text-muted-foreground">Marcados</dt>
+            <dt className="text-xs text-muted-foreground">Agendados</dt>
             <dd className="font-placar mt-1 text-[2rem] text-livre">{proximos.length}</dd>
           </div>
           <div className="py-3">
