@@ -6,7 +6,7 @@ import { FaixaDemo } from "@/modules/demo/componentes/faixa-demo";
 export default function LayoutApp({ children }: LayoutProps<"/">) {
   return (
     <>
-      <main className="pt-seguro mx-auto min-h-dvh max-w-md pb-[calc(4rem+env(safe-area-inset-bottom)+1.5rem)]">
+      <main className="pt-seguro mx-auto min-h-dvh max-w-md pb-[calc(4rem+env(safe-area-inset-bottom)+2.5rem)]">
         {modoDemo && <FaixaDemo />}
         {children}
       </main>

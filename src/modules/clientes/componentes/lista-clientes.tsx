@@ -1,5 +1,6 @@
 "use client";
 
+import { EscudoCabecalho } from "@/components/escudo-cabecalho";
 import { Loader2, Search, UserPlus, Users } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -74,8 +75,9 @@ export function ListaClientes({
   return (
     <div>
       <header className="cabecalho sticky top-0 z-30 bg-background px-4 pt-4 pb-3">
-        <div className="flex items-end justify-between gap-3">
-          <h1 className="titulo-tela font-placar text-[3.25rem] leading-[0.85]">Clientes</h1>
+        <div className="flex items-center gap-3">
+          <EscudoCabecalho />
+          <h1 className="titulo-tela font-placar min-w-0 flex-1 text-[2.25rem] leading-[0.85]">Clientes</h1>
           <button
             type="button"
             onClick={() => setNovoAberto(true)}

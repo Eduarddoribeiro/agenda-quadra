@@ -9,10 +9,12 @@ import { cn } from "@/lib/utils";
  * Compartilha os horários livres. No celular abre a folha de compartilhamento do sistema
  * (WhatsApp, grupos etc.); sem ela, abre o WhatsApp direto com o texto pronto.
  */
-export function BotaoCompartilhar({ texto, className, rotulo = "Compartilhar livres" }: {
+export function BotaoCompartilhar({ texto, className, rotulo = "Compartilhar livres", compacto = false }: {
   texto: string | null;
   className?: string;
   rotulo?: string;
+  /** Só o ícone, num botão redondo (o rótulo vira o nome acessível). */
+  compacto?: boolean;
 }) {
   async function compartilhar() {
     if (!texto) {
@@ -29,6 +31,22 @@ export function BotaoCompartilhar({ texto, className, rotulo = "Compartilhar liv
     }
     window.open(linkWhatsApp(null, texto), "_blank", "noopener");
   }
+
+  if (compacto)
+    return (
+      <button
+        type="button"
+        onClick={compartilhar}
+        aria-label={rotulo}
+        title={rotulo}
+        className={cn(
+          "grid size-11 shrink-0 place-items-center rounded-full border bg-card outline-none focus-visible:ring-3 focus-visible:ring-ring/60 active:bg-muted",
+          className,
+        )}
+      >
+        <Share2 className="size-[18px]" aria-hidden />
+      </button>
+    );
 
   return (
     <button

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { rotuloHorario } from "@/lib/datas";
-import { calcularSlots, conflitoNoIntervalo, juntarPassadosLivres, linhasDoDia, slotsLivresFuturos, type BloqueioNoSlot, type ReservaNoSlot } from "./slots";
+import { calcularSlots, conflitoNoIntervalo, juntarPassadosLivres, linhasDoDia, separarPassados, slotsLivresFuturos, type BloqueioNoSlot, type ReservaNoSlot } from "./slots";
 
 const DATA = "2026-10-20"; // terça
 const MADRUGADA = new Date("2026-10-20T03:00:00Z"); // 00:00 em São Paulo
@@ -188,5 +188,36 @@ describe("juntarPassadosLivres", () => {
       "livre",
       "livre",
     ]);
+  });
+});
+
+describe("separarPassados", () => {
+  const periodos = [{ abertura: "08:00", fechamento: "23:00" }];
+  // 18h45 em São Paulo
+  const agora = new Date("2026-10-20T21:45:00Z");
+
+  it("junta tudo o que terminou numa linha só; o jogo em andamento fica fora", () => {
+    const slots = calcularSlots({
+      data: DATA,
+      periodos,
+      reservas: [
+        { ...reserva("2026-10-20T12:00:00Z", "2026-10-20T13:00:00Z"), id: "manha" }, // 09h
+        { ...reserva("2026-10-20T21:00:00Z", "2026-10-20T22:00:00Z"), id: "agora" }, // 18h
+      ],
+      bloqueios: [],
+      agora,
+    });
+    const { passados, resto } = separarPassados(linhasDoDia(slots));
+    expect(passados).toMatchObject({ de: 8 * 60, ate: 18 * 60, jogos: 1, livres: 9 });
+    expect(passados?.linhas).toHaveLength(10);
+    expect(resto[0].minuto).toBe(18 * 60);
+    expect(resto[0].agora).toBe(true);
+  });
+
+  it("de manhã cedo não há nada para juntar", () => {
+    const slots = calcularSlots({ data: DATA, periodos, reservas: [], bloqueios: [], agora: MADRUGADA });
+    const { passados, resto } = separarPassados(slots);
+    expect(passados).toBeNull();
+    expect(resto).toHaveLength(15);
   });
 });

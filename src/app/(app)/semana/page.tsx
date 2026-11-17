@@ -33,13 +33,13 @@ function EsqueletoSemana() {
   return (
     <div aria-busy aria-label="Carregando semana">
       <div className="cabecalho px-4 pt-4 pb-3">
-        <Skeleton className="h-11 w-44" />
+        <Skeleton className="h-8 w-36" />
         <Skeleton className="mt-2 h-4 w-36" />
       </div>
       <div className="space-y-2 px-4 pt-4">
         <Skeleton className="mb-6 h-5 w-40" />
         {Array.from({ length: 7 }, (_, i) => (
-          <Skeleton key={i} className="h-18 rounded-xl" />
+          <Skeleton key={i} className="h-12 rounded-xl" />
         ))}
       </div>
     </div>

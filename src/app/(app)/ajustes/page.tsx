@@ -2,6 +2,7 @@ import { LogOut } from "lucide-react";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { EscudoCabecalho } from "@/components/escudo-cabecalho";
 import { Skeleton } from "@/components/ui/skeleton";
 import { exigirUsuario } from "@/lib/auth";
 import { authDesativada } from "@/lib/auth-config";
@@ -18,8 +19,11 @@ export const metadata: Metadata = { title: "Ajustes" };
 export default function PaginaAjustes() {
   return (
     <div>
-      <header className="cabecalho px-4 pt-4 pb-3">
-        <h1 className="titulo-tela font-placar text-[3.25rem] leading-[0.85]">Ajustes</h1>
+      <header className="cabecalho px-4 pt-3 pb-3">
+        <div className="flex min-h-11 items-center gap-3">
+          <EscudoCabecalho />
+          <h1 className="titulo-tela font-placar text-[2.25rem] leading-[0.85]">Ajustes</h1>
+        </div>
       </header>
       <Suspense fallback={<EsqueletoAjustes />}>
         <Conteudo />
@@ -38,7 +42,7 @@ async function Conteudo() {
       <section aria-labelledby="titulo-funcionamento">
         <h2 id="titulo-funcionamento" className="font-bold">Horário de funcionamento</h2>
         <p className="mb-3 text-sm text-muted-foreground">
-          {quadra.nome}. Cada período vira jogos de 1 hora a partir do horário de início. Use mais de um período para horários quebrados, como 18h30.
+          {quadra.nome}. O horário padrão vale para todos os dias abertos; o dia que for diferente entra embaixo. Cada período vira jogos de 1 hora a partir do início.
         </p>
         <EditorHorarios horariosIniciais={horarios} />
       </section>

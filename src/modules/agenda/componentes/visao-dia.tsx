@@ -1,9 +1,11 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { EscudoCabecalho } from "@/components/escudo-cabecalho";
 import {
   DIAS_SEMANA_CURTOS,
   diaDaSemana,
@@ -17,26 +19,91 @@ import {
 import { cn } from "@/lib/utils";
 import { textoHorariosLivres } from "../compartilhar";
 import type { AgendaDia } from "../consultas";
-import { juntarPassadosLivres, linhasDoDia, slotsLivresFuturos, type Slot } from "../slots";
+import { juntarPassadosLivres, linhasDoDia, separarPassados, slotsLivresFuturos, type Slot } from "../slots";
 import { BotaoCompartilhar } from "./botao-compartilhar";
 import { DrawerReserva } from "./drawer-reserva";
 import { DrawerReservar } from "./drawer-reservar";
 import { LinhaSlot } from "./linha-slot";
 
+/** Uma letra por horário de cada dia: l livre, r reservado, b bloqueado, p já passou. */
+export type OcupacaoSemana = Record<DataISO, string>;
+
 const hrefDoDia = (data: DataISO, hoje: DataISO) => (data === hoje ? "/" : `/?data=${data}`);
 
-export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
+const COR_OCUPACAO: Record<string, string> = {
+  l: "bg-livre",
+  r: "bg-foreground/45",
+  b: "bg-amarelo",
+  p: "bg-foreground/12",
+};
+
+/** Mini placar do dia na faixa da semana: uma pastilha por horário. */
+function MiniOcupacao({ letras, selecionado }: { letras: string | undefined; selecionado: boolean }) {
+  if (!letras) return <span aria-hidden className="mt-1 h-1" />;
+  return (
+    <span aria-hidden className="mt-1 flex h-1 w-[78%] gap-px">
+      {[...letras].map((l, i) => (
+        <span
+          key={i}
+          className={cn(
+            "flex-1 rounded-[1px]",
+            selecionado && l === "r" ? "bg-primary-foreground/40" : selecionado && l === "p" ? "bg-primary-foreground/15" : COR_OCUPACAO[l],
+          )}
+        />
+      ))}
+    </span>
+  );
+}
+
+export function VisaoDia({
+  dia,
+  hoje,
+  ocupacao,
+  abrirReserva,
+}: {
+  dia: AgendaDia;
+  hoje: DataISO;
+  ocupacao: OcupacaoSemana;
+  /** Veio do botão "Reservar" da barra: abre a gaveta no próximo horário livre. */
+  abrirReserva: "sim" | "sem-livres" | null;
+}) {
   const { data, slots, aberto } = dia;
   const router = useRouter();
   const [trocandoDia, startTroca] = useTransition();
   const [slotReservar, setSlotReservar] = useState<Slot | null>(null);
   const [slotAberto, setSlotAberto] = useState<Slot | null>(null);
+  const [verPassados, setVerPassados] = useState(false);
 
+  const ehHoje = data === hoje;
   const livres = useMemo(() => slotsLivresFuturos(slots), [slots]);
   const linhas = useMemo(() => linhasDoDia(slots), [slots]);
-  const linhasNaTela = useMemo(() => juntarPassadosLivres(linhas), [linhas]);
-  const reservados = linhas.filter((s) => s.estado === "reservado").length;
+  // Hoje, tudo o que já terminou vira uma linha no topo: o dono abre e já vê o que vem agora.
+  const { passados, resto } = useMemo(() => {
+    const separados = separarPassados(linhas);
+    return ehHoje && separados.passados && separados.passados.linhas.length >= 2
+      ? separados
+      : { passados: null, resto: linhas };
+  }, [linhas, ehHoje]);
+  const linhasNaTela = useMemo(() => juntarPassadosLivres(resto), [resto]);
+  const linhasPassadas = useMemo(() => (passados ? juntarPassadosLivres(passados.linhas) : []), [passados]);
+  const jogos = linhas.filter((s) => s.estado === "reservado").length;
   const texto = useMemo(() => textoHorariosLivres([{ data, slots }]), [data, slots]);
+
+  // Botão "Reservar" da barra: abre a gaveta no próximo horário livre. É um ajuste de estado
+  // durante a renderização (cada pedido novo abre uma vez), sem efeito em cascata.
+  const [pedidoAtendido, setPedidoAtendido] = useState<typeof abrirReserva>(null);
+  if (abrirReserva !== pedidoAtendido) {
+    setPedidoAtendido(abrirReserva);
+    // Prefere um horário que ainda não começou; o que está rolando livre fica de reserva.
+    const alvo = livres.find((s) => !s.agora) ?? livres[0];
+    if (abrirReserva === "sim" && alvo) setSlotReservar(alvo);
+  }
+  // Depois limpa o endereço, para recarregar a página não abrir a gaveta de novo.
+  useEffect(() => {
+    if (!abrirReserva) return;
+    if (abrirReserva === "sem-livres") toast("Nenhum horário livre nos próximos 14 dias.");
+    router.replace(hrefDoDia(data, hoje), { scroll: false });
+  }, [abrirReserva, router, data, hoje]);
 
   function irPara(destino: DataISO) {
     startTroca(() => router.push(hrefDoDia(destino, hoje), { scroll: false }));
@@ -68,31 +135,30 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
   }
 
   const segunda = inicioDaSemana(data);
-  const ehHoje = data === hoje;
 
   return (
     <div>
-      <header className="cabecalho sticky top-0 z-30 bg-background px-4 pt-4 pb-3">
-        <div className="flex items-end justify-between gap-3">
-          <div className="min-w-0">
-            {/* Nome do dia em caixa alta é mais largo que "HOJE": um pouco menor para caber ao lado das setas. */}
-            <h1 className={cn("titulo-tela font-placar leading-[0.85]", ehHoje ? "text-[3.25rem]" : "text-[2.75rem]")}>
+      <header className="cabecalho sticky top-0 z-30 bg-background px-4 pt-3 pb-3">
+        <div className="flex items-center gap-3">
+          <EscudoCabecalho />
+          <div className="min-w-0 flex-1">
+            <h1 className="titulo-tela font-placar truncate text-[2.25rem] leading-[0.85]">
               {ehHoje ? "Hoje" : nomeDoDia(data)}
             </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
+            <p className="mt-1 truncate text-[13px] text-muted-foreground">
               {ehHoje ? `${nomeDoDia(data)}, ` : ""}
-              {formatarData(data, "d 'de' MMMM")}
+              {formatarData(data, "d 'de' MMM")}
             </p>
           </div>
+          {!ehHoje && (
+            <Link
+              href="/"
+              className="flex h-10 shrink-0 items-center rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground"
+            >
+              Hoje
+            </Link>
+          )}
           <div className="flex shrink-0 items-center gap-1">
-            {!ehHoje && (
-              <Link
-                href="/"
-                className="mr-1 flex h-11 items-center rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground"
-              >
-                Hoje
-              </Link>
-            )}
             <button
               type="button"
               onClick={() => irPara(somarDias(data, -1))}
@@ -112,26 +178,30 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
           </div>
         </div>
 
-        {/* Faixa da semana: pular direto para outro dia com o polegar */}
+        {/* Faixa da semana: pular direto para outro dia, já vendo como cada um está */}
         <nav aria-label="Dias da semana" className="mt-3 grid grid-cols-7 gap-1">
           {Array.from({ length: 7 }, (_, i) => somarDias(segunda, i)).map((d) => {
             const selecionado = d === data;
+            const ehDiaDeHoje = d === hoje;
             return (
               <Link
                 key={d}
                 href={hrefDoDia(d, hoje)}
                 scroll={false}
                 aria-current={selecionado ? "date" : undefined}
+                aria-label={`${nomeDoDia(d)}, ${formatarData(d, "d 'de' MMMM")}${ehDiaDeHoje ? " (hoje)" : ""}`}
                 className={cn(
-                  "relative flex h-13 flex-col items-center justify-center rounded-lg text-xs leading-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/60",
+                  "flex h-14 flex-col items-center justify-center rounded-lg text-[11px] leading-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/60",
                   selecionado ? "bg-primary text-primary-foreground" : "text-muted-foreground active:bg-muted",
                 )}
               >
-                <span>{DIAS_SEMANA_CURTOS[diaDaSemana(d)]}</span>
-                <span className={cn("text-base font-bold", !selecionado && (d < hoje ? "text-muted-foreground" : "text-foreground"))}>{Number(d.slice(8))}</span>
-                {d === hoje && !selecionado && (
-                  <span aria-label="hoje" className="absolute bottom-1 size-1 rounded-full bg-agora" />
-                )}
+                <span className={cn(ehDiaDeHoje && !selecionado && "font-bold text-agora")}>
+                  {ehDiaDeHoje ? "hoje" : DIAS_SEMANA_CURTOS[diaDaSemana(d)]}
+                </span>
+                <span className={cn("text-base font-bold", !selecionado && (d < hoje ? "text-muted-foreground" : "text-foreground"))}>
+                  {Number(d.slice(8))}
+                </span>
+                <MiniOcupacao letras={ocupacao[d]} selecionado={selecionado} />
               </Link>
             );
           })}
@@ -144,7 +214,7 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        className={cn("px-4 pt-4 transition-opacity", trocandoDia && "opacity-50")}
+        className={cn("px-4 pt-3 transition-opacity", trocandoDia && "opacity-50")}
         style={{
           transform: arrasto ? `translateX(${arrasto}px)` : undefined,
           transition: arrasto ? "none" : "transform 200ms ease-out, opacity 150ms",
@@ -152,35 +222,52 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
       >
         {aberto ? (
           <>
-            <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-3 flex min-h-11 items-center justify-between gap-3">
               <p className="text-sm">
                 {livres.length > 0 ? (
-                  <>
-                    <strong className="text-livre">
-                      {livres.length} {livres.length === 1 ? "horário livre" : "horários livres"}
-                    </strong>
-                    {reservados > 0 && <span className="text-muted-foreground">, {reservados} reservado{reservados > 1 && "s"}</span>}
-                  </>
+                  <strong className="text-livre">
+                    {livres.length} {livres.length === 1 ? "livre" : "livres"}
+                    {ehHoje && " até fechar"}
+                  </strong>
                 ) : (
                   <strong>{slots.some((s) => !s.passado) ? "Tudo reservado" : "Dia encerrado"}</strong>
                 )}
+                {jogos > 0 && (
+                  <span className="text-muted-foreground">
+                    {" "}· {jogos} {jogos === 1 ? "jogo" : "jogos"}
+                  </span>
+                )}
               </p>
-              {livres.length > 0 && <BotaoCompartilhar texto={texto} rotulo="Compartilhar" />}
+              {livres.length > 0 && <BotaoCompartilhar texto={texto} rotulo="Compartilhar horários livres" compacto />}
             </div>
 
-            <ol className="space-y-2.5">
-              {linhasNaTela.map((l) =>
-                "tipo" in l ? (
-                  <li key={`passados-${l.de}`} className="grid grid-cols-[4.25rem_1fr] gap-2">
-                    <span aria-hidden />
-                    <p className="flex min-h-11 items-center rounded-xl border border-dashed px-4 text-sm text-muted-foreground">
-                      {rotuloHorario(l.de)} às {rotuloHorario(l.ate)} · {l.quantos === 1 ? "ficou livre" : "ficaram livres"}
-                    </p>
-                  </li>
-                ) : (
-                  <LinhaSlot key={l.minuto} slot={l} onReservar={setSlotReservar} onAbrirReserva={setSlotAberto} />
-                ),
+            <ol className="space-y-2">
+              {passados && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => setVerPassados((v) => !v)}
+                    aria-expanded={verPassados}
+                    className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-dashed px-4 text-left text-sm text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/60 active:bg-muted"
+                  >
+                    <span>
+                      {rotuloHorario(passados.de)} às {rotuloHorario(passados.ate)}
+                      {" · "}
+                      {[
+                        passados.jogos > 0 && `${passados.jogos} ${passados.jogos === 1 ? "jogo" : "jogos"}`,
+                        passados.livres > 0 && `${passados.livres} ${passados.livres === 1 ? "ficou livre" : "ficaram livres"}`,
+                      ]
+                        .filter(Boolean)
+                        .join(", ") || "já passou"}
+                    </span>
+                    <ChevronDown className={cn("size-4 shrink-0 transition-transform", verPassados && "rotate-180")} aria-hidden />
+                  </button>
+                </li>
               )}
+              {verPassados && linhasPassadas.map((l) => <Linha key={chave(l)} linha={l} onReservar={setSlotReservar} onAbrirReserva={setSlotAberto} />)}
+              {linhasNaTela.map((l) => (
+                <Linha key={chave(l)} linha={l} onReservar={setSlotReservar} onAbrirReserva={setSlotAberto} />
+              ))}
             </ol>
           </>
         ) : (
@@ -208,4 +295,29 @@ export function VisaoDia({ dia, hoje }: { dia: AgendaDia; hoje: DataISO }) {
       />
     </div>
   );
+}
+
+type LinhaDaTela = ReturnType<typeof juntarPassadosLivres>[number];
+
+const chave = (l: LinhaDaTela) => ("tipo" in l ? `passados-${l.de}` : String(l.minuto));
+
+function Linha({
+  linha: l,
+  onReservar,
+  onAbrirReserva,
+}: {
+  linha: LinhaDaTela;
+  onReservar: (s: Slot) => void;
+  onAbrirReserva: (s: Slot) => void;
+}) {
+  if ("tipo" in l)
+    return (
+      <li className="grid grid-cols-[3.5rem_1fr] gap-2">
+        <span aria-hidden />
+        <p className="flex min-h-11 items-center rounded-xl border border-dashed px-4 text-sm text-muted-foreground">
+          {rotuloHorario(l.de)} às {rotuloHorario(l.ate)} · {l.quantos === 1 ? "ficou livre" : "ficaram livres"}
+        </p>
+      </li>
+    );
+  return <LinhaSlot slot={l} onReservar={onReservar} onAbrirReserva={onAbrirReserva} />;
 }

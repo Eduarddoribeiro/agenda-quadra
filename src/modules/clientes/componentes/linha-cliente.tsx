@@ -105,7 +105,12 @@ export function LinhaCliente({
           <span className="block">
             <strong className="text-sm text-foreground">{c.totalReservas}</strong> {c.totalReservas === 1 ? "jogo" : "jogos"}
           </span>
-          {c.ultimaReserva && <span className="block">{formatarSP(c.ultimaReserva, "dd/MM")}</span>}
+          {/* O jogo mais novo pode ser o próximo (ainda vai acontecer) ou o último que já foi. */}
+          {c.ultimaReserva && (
+            <span className="block">
+              {c.ultimaReserva > new Date() ? "próx." : "últ."} {formatarSP(c.ultimaReserva, "dd/MM")}
+            </span>
+          )}
         </span>
       </Link>
     </li>

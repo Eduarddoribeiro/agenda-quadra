@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { EscudoCabecalho } from "@/components/escudo-cabecalho";
 import { DIAS_SEMANA_CURTOS, diaDaSemana, formatarData, rotuloHorario, somarDias, type DataISO } from "@/lib/datas";
 import { cn } from "@/lib/utils";
 import { textoHorariosLivres } from "../compartilhar";
@@ -8,7 +9,8 @@ import { DURACAO_SLOT, slotsLivresFuturos, type Slot } from "../slots";
 import { BotaoCompartilhar } from "./botao-compartilhar";
 
 function corDaCelula(slot: Slot) {
-  if (slot.estado === "reservado") return slot.passado ? "bg-foreground/35" : "bg-foreground";
+  // Reservado em cinza: o branco fica só para marcar o dia de hoje.
+  if (slot.estado === "reservado") return slot.passado ? "bg-foreground/25" : "bg-foreground/45";
   if (slot.estado === "bloqueado") return slot.passado ? "bg-amarelo/40" : "bg-amarelo";
   return slot.passado ? "bg-foreground/12" : "bg-livre/80";
 }
@@ -32,24 +34,24 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
   const primeira = minutos.length ? Math.min(...minutos) : 8 * 60;
   const ultima = minutos.length ? Math.max(...minutos) + DURACAO_SLOT : 23 * 60;
   const colunas = (ultima - primeira) / 30;
-  // Marcas da régua: abertura, meio-dia, 18h (quando começa o movimento) e fechamento.
-  const marcas = [primeira, 12 * 60, 18 * 60, ultima].filter(
-    (m, i, todas) => (i === 0 || i === todas.length - 1 || (m > primeira + 120 && m < ultima - 120)),
-  );
+  // Marcas da régua a cada 3 horas a partir da abertura, cada uma no começo da sua coluna.
+  const marcas: number[] = [];
+  for (let m = primeira; m <= ultima - 120; m += 180) marcas.push(m);
 
   return (
     <div>
       <header className="cabecalho sticky top-0 z-30 bg-background px-4 pt-4 pb-3">
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <h1 className="titulo-tela font-placar text-[3.25rem] leading-[0.85]">Semana</h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">{intervaloDaSemana(segunda)}</p>
+        <div className="flex items-center gap-3">
+          <EscudoCabecalho />
+          <div className="min-w-0 flex-1">
+            <h1 className="titulo-tela font-placar text-[2.25rem] leading-[0.85]">Semana</h1>
+            <p className="mt-1 truncate text-[13px] text-muted-foreground">{intervaloDaSemana(segunda)}</p>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             {!semanaAtual && (
               <Link
                 href="/semana"
-                className="mr-1 flex h-11 items-center rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground"
+                className="mr-1 flex h-10 items-center rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground"
               >
                 Atual
               </Link>
@@ -72,8 +74,8 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
         </div>
       </header>
 
-      <div className="px-4 pt-4">
-        <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="px-4 pt-3">
+        <div className="flex min-h-11 items-center justify-between gap-3">
           <p className="text-sm">
             {totalLivres > 0 ? (
               <strong className="text-livre">
@@ -83,19 +85,23 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
               <strong>Semana sem horários livres</strong>
             )}
           </p>
-          {totalLivres > 0 && <BotaoCompartilhar texto={texto} rotulo="Compartilhar semana" />}
+          {totalLivres > 0 && <BotaoCompartilhar texto={texto} rotulo="Compartilhar horários livres da semana" compacto />}
         </div>
 
+        {/* Legenda antes das barras: sem ela, as cores não dizem nada */}
+        <ul className="mt-2 mb-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground" aria-label="Legenda">
+          <li className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-livre/80" />Livre</li>
+          <li className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-foreground/45" />Reservado</li>
+          <li className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-amarelo" />Bloqueado</li>
+          <li className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-foreground/12" />Já passou</li>
+        </ul>
+
         {/* Régua de horas alinhada com as faixas */}
-        <div className="grid grid-cols-[3.5rem_1fr_4.25rem] gap-3 pb-1 text-xs text-muted-foreground" aria-hidden>
+        <div className="grid grid-cols-[2.75rem_1fr_3rem] gap-2.5 px-[13px] pb-1 text-[11px] text-muted-foreground" aria-hidden>
           <span />
           <div className="relative h-4">
-            {marcas.map((m, i) => (
-              <span
-                key={m}
-                className={cn("absolute", i > 0 && i < marcas.length - 1 && "-translate-x-1/2", i === marcas.length - 1 && "-translate-x-full")}
-                style={{ left: `${((m - primeira) / (ultima - primeira)) * 100}%` }}
-              >
+            {marcas.map((m) => (
+              <span key={m} className="absolute" style={{ left: `${((m - primeira) / (ultima - primeira)) * 100}%` }}>
                 {rotuloHorario(m)}
               </span>
             ))}
@@ -103,7 +109,7 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
           <span />
         </div>
 
-        <ol className="space-y-2">
+        <ol className="space-y-1.5">
           {dias.map((dia) => {
             const livres = slotsLivresFuturos(dia.slots).length;
             const passou = dia.data < hoje;
@@ -113,7 +119,7 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
                 <Link
                   href={ehHoje ? "/" : `/?data=${dia.data}`}
                   className={cn(
-                    "grid min-h-18 grid-cols-[3.5rem_1fr_4.25rem] items-center gap-3 rounded-xl border bg-card px-3 py-2 outline-none focus-visible:ring-3 focus-visible:ring-ring/60 active:bg-muted",
+                    "grid min-h-12 grid-cols-[2.75rem_1fr_3rem] items-center gap-2.5 rounded-xl border bg-card px-3 py-1 outline-none focus-visible:ring-3 focus-visible:ring-ring/60 active:bg-muted",
                     ehHoje && "border-2 border-foreground",
                   )}
                 >
@@ -121,14 +127,14 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
                     <span className={cn("text-xs", ehHoje ? "font-bold text-agora" : "text-muted-foreground")}>
                       {ehHoje ? "hoje" : DIAS_SEMANA_CURTOS[diaDaSemana(dia.data)]}
                     </span>
-                    <span className={cn("font-placar mt-1 text-[2.25rem]", passou && "text-muted-foreground")}>
+                    <span className={cn("font-placar text-[1.5rem]", passou && "text-muted-foreground")}>
                       {Number(dia.data.slice(8))}
                     </span>
                   </span>
 
                   {dia.aberto ? (
                     <span
-                      className="grid h-9 gap-[3px]"
+                      className="grid h-6 gap-[3px]"
                       style={{ gridTemplateColumns: `repeat(${colunas}, minmax(0, 1fr))` }}
                       aria-hidden
                     >
@@ -147,7 +153,7 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
                   <span className="text-right text-sm leading-tight">
                     {!dia.aberto || passou ? null : livres > 0 ? (
                       <>
-                        <strong className="font-placar block text-2xl text-livre">{livres}</strong>
+                        <strong className="font-placar block text-[1.25rem] text-livre">{livres}</strong>
                         <span className="text-xs text-muted-foreground">{livres === 1 ? "livre" : "livres"}</span>
                       </>
                     ) : (
@@ -160,12 +166,6 @@ export function VisaoSemana({ dias, segunda, hoje }: { dias: AgendaDia[]; segund
           })}
         </ol>
 
-        <ul className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground" aria-label="Legenda">
-          <li className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-livre/80" />Livre</li>
-          <li className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-foreground" />Reservado</li>
-          <li className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-amarelo" />Bloqueado</li>
-          <li className="flex items-center gap-1.5"><span className="size-3 rounded-[3px] bg-foreground/12" />Já passou</li>
-        </ul>
       </div>
     </div>
   );
